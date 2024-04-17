@@ -1,0 +1,46 @@
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+    <data>
+        <import type="android.view.View"/>
+        <variable
+            name="viewModel"
+            type="com.example.testcreditcard.viewmodel.VoidViewModel" />
+    </data>
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_margin="10dp"
+        android:layout_height="match_parent">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Transaction ID">
+        </TextView>
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@{viewModel.transactionID}"
+            android:enabled="false">
+        </EditText>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:layout_height="wrap_content"
+            android:text="Original Transaction ID">
+        </TextView>
+        <Spinner
+            android:layout_width="match_parent"
+            android:layout_marginBottom="10dp"
+            android:selectedItemPosition="@={viewModel.selectedOriginalTransactionIDPosition}"
+            android:entries="@{viewModel.originalTransactionIDList}"
+            android:layout_height="wrap_content">
+        </Spinner>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:enabled="@{viewModel.isVoidButtonEnable}"
+            android:text="Void"
+            android:onClick="@{()->viewModel.SendVoidRequest()}">
+        </Button>
+    </LinearLayout>
+</layout>

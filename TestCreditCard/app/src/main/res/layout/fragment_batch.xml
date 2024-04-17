@@ -1,0 +1,42 @@
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+    <data>
+        <import type="android.view.View"/>
+        <variable
+            name="viewModel"
+            type="com.example.testcreditcard.viewmodel.BatchViewModel" />
+    </data>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:layout_height="wrap_content"
+            android:text="UnBatch Transaction ID">
+        </TextView>
+        <Spinner
+            android:layout_width="match_parent"
+            android:layout_marginBottom="10dp"
+            android:entries="@{viewModel.originalTransactionIDList}"
+            android:layout_height="wrap_content">
+        </Spinner>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Batch"
+            android:enabled="@{viewModel.isBatchButtonEnable}"
+            android:onClick="@{()->viewModel.SendBatchRequest()}">
+        </Button>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/error"
+            android:text="@{viewModel.errorMessage}">
+        </TextView>
+    </LinearLayout>
+
+</layout>

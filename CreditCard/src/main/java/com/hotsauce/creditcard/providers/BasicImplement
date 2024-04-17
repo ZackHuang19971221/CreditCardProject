@@ -1,0 +1,113 @@
+    //When Add New ChipReader Copy This
+
+    @Override
+    public Output AuthCard(Input input) {
+        Output output = new Output();
+        try
+        {
+            output.ResultMessage = "Success!";
+            output.ResultCode = ResultCode.Success;
+        }
+        catch(RuntimeException exception)
+        {
+            output.ResultMessage = exception.getMessage();
+            output.ResultCode = ResultCode.SystemError;
+        }
+        return  output;
+    }
+
+    @Override
+    public com.hotsauce.creditcard.io.capture.Output Capture(com.hotsauce.creditcard.io.capture.Input input) {
+        com.hotsauce.creditcard.io.capture.Output output = new com.hotsauce.creditcard.io.capture.Output();
+        try
+        {
+            output.ResultMessage = "Success!";
+            output.ResultCode = ResultCode.Success;
+        }
+        catch(RuntimeException exception)
+        {
+            output.ResultMessage = exception.getMessage();
+            output.ResultCode = ResultCode.SystemError;
+        }
+        return  output;
+    }
+
+    @Override
+    public com.hotsauce.creditcard.io.sale.Output Sale(com.hotsauce.creditcard.io.sale.Input input) {
+        com.hotsauce.creditcard.io.sale.Output output = new com.hotsauce.creditcard.io.sale.Output();
+        try
+        {
+            output.ResultMessage = "Success!";
+            output.ResultCode = ResultCode.Success;
+        }
+        catch(RuntimeException exception)
+        {
+            output.ResultMessage = exception.getMessage();
+            output.ResultCode = ResultCode.SystemError;
+        }
+        return  output;
+    }
+
+    @Override
+    public com.hotsauce.creditcard.io.entertips.Output EnterTips(com.hotsauce.creditcard.io.entertips.Input input) {
+        com.hotsauce.creditcard.io.entertips.Output output = new com.hotsauce.creditcard.io.entertips.Output();
+        try
+        {
+            output.ResultMessage = "Success!";
+            output.ResultCode = ResultCode.Success;
+        }
+        catch(RuntimeException exception)
+        {
+            output.ResultMessage = exception.getMessage();
+            output.ResultCode = ResultCode.SystemError;
+        }
+        return  output;
+    }
+
+    @Override
+    public com.hotsauce.creditcard.io.adjusttips.Output AdjustTips(com.hotsauce.creditcard.io.adjusttips.Input input) {
+        com.hotsauce.creditcard.io.adjusttips.Output output = new com.hotsauce.creditcard.io.adjusttips.Output();
+        try
+        {
+            output.ResultMessage = "Success!";
+            output.ResultCode = ResultCode.Success;
+        }
+        catch(RuntimeException exception)
+        {
+            output.ResultMessage = exception.getMessage();
+            output.ResultCode = ResultCode.SystemError;
+        }
+        return  output;
+    }
+
+    @Override
+    public com.hotsauce.creditcard.io.voidsale.Output Void(com.hotsauce.creditcard.io.voidsale.Input input) {
+        com.hotsauce.creditcard.io.voidsale.Output output = new com.hotsauce.creditcard.io.voidsale.Output();
+        try
+        {
+            output.ResultMessage = "Success!";
+            output.ResultCode = ResultCode.Success;
+        }
+        catch(RuntimeException exception)
+        {
+            output.ResultMessage = exception.getMessage();
+            output.ResultCode = ResultCode.SystemError;
+        }
+        return  output;
+    }
+
+    @Override
+    public com.hotsauce.creditcard.io.batchsettlement.Output BatchSettlement(com.hotsauce.creditcard.io.batchsettlement.Input input) {
+        com.hotsauce.creditcard.io.batchsettlement.Output output = new com.hotsauce.creditcard.io.batchsettlement.Output();
+        try
+        {
+            output.ResultMessage = "Success!";
+            output.ResultCode = ResultCode.Success;
+        }
+        catch(RuntimeException exception)
+        {
+            output.ResultMessage = exception.getMessage();
+            output.ResultCode = ResultCode.SystemError;
+        }
+        return  output;
+    }
