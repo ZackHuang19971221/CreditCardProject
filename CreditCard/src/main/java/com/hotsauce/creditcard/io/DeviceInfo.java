@@ -41,7 +41,7 @@ public class DeviceInfo {
         return port >= 0 && port <= 65535;
     }
 
-    private final int minTimeOut = 500;
+    private final int minTimeOut = 5000;
     private final int maxTimeOut = 60000;
     private boolean isValidTimeOut(int timeOut) {
         return timeOut >= minTimeOut && maxTimeOut >= timeOut;

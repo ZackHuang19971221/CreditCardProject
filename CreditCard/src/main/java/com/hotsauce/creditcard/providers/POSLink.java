@@ -14,6 +14,9 @@ import lombok.SneakyThrows;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 
 public class POSLink extends CreditCard<PosLinkManageData> {
@@ -48,7 +51,9 @@ public class POSLink extends CreditCard<PosLinkManageData> {
         }
         if(request instanceof ManageRequest) {
             posLink.ManageRequest = (ManageRequest) request;
-            posLink.ProcessTrans();
+        }
+        if(request instanceof BatchRequest) {
+            posLink.BatchRequest = (BatchRequest) request;
         }
 
         ProcessTransResult response = posLink.ProcessTrans();
@@ -110,12 +115,32 @@ public class POSLink extends CreditCard<PosLinkManageData> {
                 }
             };
         }
+        if(request instanceof BatchRequest) {
+            return (T2) new APIResponse<>(request,posLink) {
+
+                @Override
+                public String getSuccessCode() {
+                    return "000000";
+                }
+
+                @Override
+                public String getProviderCode() {
+                    return getResponse().BatchResponse.ResultCode;
+                }
+
+                @Override
+                public String getProviderMessage() {
+                    return getResponse().BatchResponse.ResultTxt;
+                }
+            };
+        }
         throw new Exception();
     }
 
 
     @Override
     protected ProviderResult<Response> implementAuth(Request request) {
+        TransType transType = TransType.AUTH;
         ProviderResult<Response> response = this.processManageData();
         if(!response.getIsSuccess()) {
             return response;
@@ -123,7 +148,7 @@ public class POSLink extends CreditCard<PosLinkManageData> {
         //create Request
         PaymentRequest pay = new PaymentRequest();
         pay.TenderType = pay.ParseTenderType("CREDIT");
-        pay.TransType = pay.ParseTransType(TransType.AUTH);
+        pay.TransType = pay.ParseTransType(transType.getCode());
         pay.Amount = convertBigDecimalValue(request.getAuthAmount());
         pay.CashBackAmt="";
         pay.FuelAmt = "";
@@ -146,7 +171,7 @@ public class POSLink extends CreditCard<PosLinkManageData> {
         pay.GiftTenderType = "";
         pay.OrigTraceNum = "";
         pay.ExtData = "";
-        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,TransType.AUTH);
+        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,transType.getCode());
         Response result = null;
         if(apiResponse.getIsSuccess()) {
             ExtData extData = null;
@@ -157,7 +182,7 @@ public class POSLink extends CreditCard<PosLinkManageData> {
             result = new Response() {
                 @Override
                 public String getRefNumber() {
-                    return request.getRequestId();
+                    return apiResponse.getResponse().PaymentResponse.RefNum;
                 }
                 @Override
                 public CreditCardUtil.CardIssuers getCardIssuers() {
@@ -181,43 +206,179 @@ public class POSLink extends CreditCard<PosLinkManageData> {
 
     @Override
     protected ProviderResult<com.hotsauce.creditcard.io.voidauth.Response> implementVoidAuth(com.hotsauce.creditcard.io.voidauth.Request request) {
-        return null;
+        TransType transType = TransType.VOID_AUTH;
+        ProviderResult<com.hotsauce.creditcard.io.voidauth.Response> response = this.processManageData();
+        if(!response.getIsSuccess()) {
+            return response;
+        }
+        PaymentRequest pay = new PaymentRequest();
+        pay.TenderType = pay.ParseTenderType("CREDIT");
+        pay.TransType = pay.ParseTransType(transType.getCode());
+        pay.ECRRefNum = request.getRequestId();
+        pay.OrigRefNum = request.getRefNumber();
+        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,transType.getCode());
+        com.hotsauce.creditcard.io.voidauth.Response result = null;
+        if(apiResponse.getIsSuccess()) {
+            result = new com.hotsauce.creditcard.io.voidauth.Response() {};
+        }
+        return new ProviderResult<>(apiResponse.getIsSuccess(),apiResponse.getProviderMessage(),result);
     }
 
     @Override
     protected ProviderResult<com.hotsauce.creditcard.io.capture.Response> implementCapture(com.hotsauce.creditcard.io.capture.Request request) {
-        return null;
+        TransType transType = TransType.CAPTURE;
+        ProviderResult<com.hotsauce.creditcard.io.capture.Response> response = this.processManageData();
+        if(!response.getIsSuccess()) {
+            return response;
+        }
+        PaymentRequest pay = new PaymentRequest();
+        pay.TenderType = pay.ParseTenderType("CREDIT");
+        pay.TransType = pay.ParseTransType(transType.getCode());
+        pay.Amount = convertBigDecimalValue(request.getAmount());
+        pay.TipAmt = convertBigDecimalValue(request.getTip());
+        pay.TaxAmt = convertBigDecimalValue(request.getTax());
+        pay.ECRRefNum = request.getRequestId();
+        pay.OrigRefNum = request.getRefNumber();
+        pay.ServiceFee = convertBigDecimalValue(request.getServiceFee());
+        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,transType.getCode());
+        com.hotsauce.creditcard.io.capture.Response result = null;
+        if(apiResponse.getIsSuccess()) {
+            result = () -> apiResponse.getResponse().PaymentResponse.RefNum;
+        }
+        return new ProviderResult<>(apiResponse.getIsSuccess(),apiResponse.getProviderMessage(),result);
     }
 
     @Override
     protected ProviderResult<com.hotsauce.creditcard.io.sale.Response> implementSale(com.hotsauce.creditcard.io.sale.Request request) {
-        return null;
+        TransType transType = TransType.SALE;
+        ProviderResult<com.hotsauce.creditcard.io.sale.Response> response = this.processManageData();
+        if(!response.getIsSuccess()) {
+            return response;
+        }
+        PaymentRequest pay = new PaymentRequest();
+        pay.TenderType = pay.ParseTenderType("CREDIT");
+        pay.TransType = pay.ParseTransType(transType.getCode());
+        pay.Amount = convertBigDecimalValue(request.getAmount());
+        pay.TipAmt = convertBigDecimalValue(request.getTip());
+        pay.TaxAmt = convertBigDecimalValue(request.getTax());
+        pay.ECRRefNum = request.getRequestId();
+        pay.ECRTransID = request.getRequestId();
+        pay.ServiceFee = convertBigDecimalValue(request.getServiceFee());
+        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,transType.getCode());
+        com.hotsauce.creditcard.io.sale.Response result = null;
+        if(apiResponse.getIsSuccess()) {
+            ExtData extData = null;
+            try {
+                extData = TagConverter.DeserializeObject(ExtData.class, "", posLink.PaymentResponse.ExtData);
+            }catch (Exception ignored) {}
+            ExtData finalExtData = extData;
+            result = new com.hotsauce.creditcard.io.sale.Response() {
+                @Override
+                public String getRefNumber() {
+                    return apiResponse.getResponse().PaymentResponse.RefNum;
+                }
+                @Override
+                public CreditCardUtil.CardIssuers getCardIssuers() {
+                    assert finalExtData != null;
+                    return CreditCardUtil.getCardIssuers(finalExtData.CARDBIN);
+                }
+                @Override
+                public String getCardNumber() {
+                    assert finalExtData != null;
+                    return CreditCardUtil.getPartialCardNumber(finalExtData.CARDBIN,"","");
+                }
+                @Override
+                public String getExpDate() {
+                    assert finalExtData != null;
+                    return finalExtData.ExpDate;
+                }
+            };
+        }
+        return new ProviderResult<>(apiResponse.getIsSuccess(),apiResponse.getProviderMessage(),result);
     }
 
     @Override
     protected ProviderResult<com.hotsauce.creditcard.io.voidsale.Response> implementVoidSale(com.hotsauce.creditcard.io.voidsale.Request request) {
-        return null;
+        TransType transType = request.getIsSettled() ? TransType.RETURN : TransType.VOID;
+        ProviderResult<com.hotsauce.creditcard.io.voidsale.Response> response = this.processManageData();
+        if(!response.getIsSuccess()) {
+            return response;
+        }
+        PaymentRequest pay = new PaymentRequest();
+        pay.TenderType = pay.ParseTenderType("CREDIT");
+        pay.TransType = pay.ParseTransType(transType.getCode());
+        pay.ECRRefNum = request.getRequestId();
+        pay.OrigRefNum = request.getRefNumber();
+        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,transType.getCode());
+        com.hotsauce.creditcard.io.voidsale.Response result = null;
+        if(apiResponse.getIsSuccess()) {
+            result = new com.hotsauce.creditcard.io.voidsale.Response() {};
+        }
+        return new ProviderResult<>(apiResponse.getIsSuccess(),apiResponse.getProviderMessage(),result);
     }
 
     @Override
     protected ProviderResult<com.hotsauce.creditcard.io.entertips.Response> implementEnterTips(com.hotsauce.creditcard.io.entertips.Request request) {
-        return null;
+        TransType transType = TransType.ADJUST;
+        ProviderResult<com.hotsauce.creditcard.io.entertips.Response> response = this.processManageData();
+        if(!response.getIsSuccess()) {
+            return response;
+        }
+        PaymentRequest pay = new PaymentRequest();
+        pay.TenderType = pay.ParseTenderType("CREDIT");
+        pay.TransType = pay.ParseTransType(transType.getCode());
+        pay.Amount = convertBigDecimalValue(request.getTip());
+        pay.ECRRefNum = request.getRequestId();
+        pay.OrigRefNum = request.getRefNumber();
+        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,transType.getCode());
+        com.hotsauce.creditcard.io.entertips.Response result = null;
+        if(apiResponse.getIsSuccess()) {
+            result = () -> apiResponse.getResponse().PaymentResponse.RefNum;
+        }
+        return new ProviderResult<>(apiResponse.getIsSuccess(),apiResponse.getProviderMessage(),result);
     }
 
     @Override
     protected ProviderResult<com.hotsauce.creditcard.io.adjusttips.Response> implementAdjustTips(com.hotsauce.creditcard.io.adjusttips.Request request) {
-        return null;
+        TransType transType = TransType.ADJUST;
+        ProviderResult<com.hotsauce.creditcard.io.adjusttips.Response> response = this.processManageData();
+        if(!response.getIsSuccess()) {
+            return response;
+        }
+        PaymentRequest pay = new PaymentRequest();
+        pay.TenderType = pay.ParseTenderType("CREDIT");
+        pay.TransType = pay.ParseTransType(transType.getCode());
+        pay.Amount = convertBigDecimalValue(request.getTip());
+        pay.ECRRefNum = request.getRequestId();
+        pay.OrigRefNum = request.getRefNumber();
+        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,transType.getCode());
+        com.hotsauce.creditcard.io.adjusttips.Response result = null;
+        if(apiResponse.getIsSuccess()) {
+            result = () -> apiResponse.getResponse().PaymentResponse.RefNum;
+        }
+        return new ProviderResult<>(apiResponse.getIsSuccess(),apiResponse.getProviderMessage(),result);
     }
 
     @Override
     protected ProviderResult<com.hotsauce.creditcard.io.batchsettlement.Response> implementBatch(com.hotsauce.creditcard.io.batchsettlement.Request request) {
-        return null;
+        TransType transType = TransType.BATCH_CLOSE;
+        ProviderResult<com.hotsauce.creditcard.io.batchsettlement.Response> response = this.processManageData();
+        if(!response.getIsSuccess()) {
+            return response;
+        }
+        BatchRequest batchRequest = new BatchRequest();
+        batchRequest.TransType = batchRequest.ParseTransType(transType.getCode());
+        APIResponse<BatchRequest,com.pax.poslink.PosLink> apiResponse = callApi(batchRequest,transType.getCode());
+        com.hotsauce.creditcard.io.batchsettlement.Response result = null;
+        if(apiResponse.getIsSuccess()) {
+            result = new com.hotsauce.creditcard.io.batchsettlement.Response() {};
+        }
+        return new ProviderResult<>(apiResponse.getIsSuccess(),apiResponse.getProviderMessage(),result);
     }
 
     @Override
-    protected ProviderResult<com.hotsauce.creditcard.io.cancel.Response> implementCancel(com.hotsauce.creditcard.io.cancel.Request request) {
+    protected void implementCancel() {
         posLink.CancelTrans();
-        return new ProviderResult<>(true,"Success",null);
     }
 
 
@@ -265,7 +426,6 @@ public class POSLink extends CreditCard<PosLinkManageData> {
         commSetting.setDestIP(deviceInfo.getIp());
         commSetting.setDestPort(String.valueOf(deviceInfo.getPort()));
         commSetting.setEnableProxy(false);
-        commSetting.setTimeOut(String.valueOf(deviceInfo.getTimeOut()));
         return  commSetting;
     }
 
@@ -274,24 +434,22 @@ public class POSLink extends CreditCard<PosLinkManageData> {
         return String.valueOf(multipliedValue.setScale(0, RoundingMode.HALF_UP));
     }
 
-    static class TransType{
-        public static final String AUTH="AUTH";
-
-        public static final String CAPTURE="POSTAUTH";
-
-        public static final String SALE="SALE";
-
-        //voidSale Is for UnSettled Transaction
-        public static final String VOID="VOID";
-
-        public static final String ADJUST = "ADJUST";
-
-        //Return Is for Settled Transaction
-        public static final String RETURN="RETURN";
-
-        public static final String VOID_AUTH = "VOID AUTH";
-
-        public static final String BATCH_CLOSE = "BATCHCLOSE";
+    enum TransType {
+        AUTH("AUTH"),
+        CAPTURE("POSTAUTH"),
+        SALE("SALE"),
+        VOID("VOID"),
+        ADJUST("ADJUST"),
+        RETURN("RETURN"),
+        VOID_AUTH("VOID_AUTH"),
+        BATCH_CLOSE("BATCH_CLOSE");
+        private final String code;
+        TransType(String code) {
+            this.code = code;
+        }
+        public String getCode() {
+            return code;
+        }
     }
 
     static class ExtData{

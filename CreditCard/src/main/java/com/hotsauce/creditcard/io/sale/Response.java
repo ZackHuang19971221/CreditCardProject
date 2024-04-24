@@ -2,12 +2,9 @@ package com.hotsauce.creditcard.io.sale;
 
 import com.hotsauce.creditcard.util.creditcard.CreditCardUtil;
 
-public class Response {
-    public String RefNumber;
-    public CreditCardUtil.CardIssuers CardIssuers;
-    public String CardNumber;
-    public String ExpDate;
-    public String ResultCode;
-    public String ResultMessage;
-    public String ProviderCode;
+public interface Response {
+    String getRefNumber();
+    CreditCardUtil.CardIssuers getCardIssuers();
+    String getCardNumber();
+    String getExpDate();
 }

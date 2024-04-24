@@ -6,7 +6,7 @@ package com.hotsauce.creditcard.io;
 public enum ResultCode {
     SUCCESS("0000", "Operation completed successfully."),
     INPUT_ERROR("1000", "Input error, check request format."),
-    TIME_OUT("2000","time out"),
+    TIME_OUT("2000","TIME OUT"),
     NOT_SUPPORTED("6000", "Operation not supported."),
     NETWORK_ERROR("7000", "Network error, failed to connect."),
     PROVIDER_ERROR("8000", "Error returned by the provider."),
