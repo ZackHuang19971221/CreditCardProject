@@ -1,2 +1,4 @@
-package com.hotsauce.creditcard.io.manage;public class SPIN {
+package com.hotsauce.creditcard.io.manage;
+
+public class SPIN {
 }

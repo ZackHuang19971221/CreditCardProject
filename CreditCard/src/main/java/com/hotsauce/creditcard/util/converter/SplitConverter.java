@@ -1,7 +1,7 @@
 package com.hotsauce.creditcard.util.converter;
 import java.lang.reflect.Field;
 
-public class SplitConverter {
+class SplitConverter {
     public static <T> T DeserializeObject(String[] values, Class<T> clazz) throws Exception {
         T instance = clazz.newInstance();
         String ID;

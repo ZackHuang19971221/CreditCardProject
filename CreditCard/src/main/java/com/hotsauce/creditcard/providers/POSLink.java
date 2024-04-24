@@ -1,628 +1,280 @@
 package com.hotsauce.creditcard.providers;
 
-import com.hotsauce.creditcard.ICreditCard;
-import com.hotsauce.creditcard.io.auth.Input;
-import com.hotsauce.creditcard.io.auth.Output;
+import com.hotsauce.creditcard.CreditCard;
 import com.hotsauce.creditcard.io.DeviceInfo;
-import com.hotsauce.creditcard.io.ResultCode;
+import com.hotsauce.creditcard.io.auth.Request;
+import com.hotsauce.creditcard.io.auth.Response;
+import com.hotsauce.creditcard.io.manage.PosLinkManageData;
 import com.hotsauce.creditcard.util.converter.TagConverter;
 import com.hotsauce.creditcard.util.creditcard.CreditCardUtil;
 import com.pax.poslink.*;
 import com.pax.poslink.constant.EDCType;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 
-public class POSLink implements ICreditCard {
-    private String _errorMessage;
-    private String providerCode;
-    private boolean isDeviceInfoInvalid(DeviceInfo deviceInfo)
-    {
-        if(deviceInfo == null)
-        {
-            _errorMessage = "Device Info Cannot be null";
-            return true;
-        }
-        if(!DeviceInfo.isValidIPv4(deviceInfo.IP)) {
-            _errorMessage = "IP Address Is Invalid";
-            return true;
-        }
-        return false;
-    }
-    private PosLink createPosLink(DeviceInfo deviceInfo)
-    {
-        PosLink posLink = new PosLink();
-        posLink.SetCommSetting(createCommSetting(deviceInfo));
-        return posLink;
-    }
-    private CommSetting createCommSetting(DeviceInfo deviceInfo)
-    {
-        CommSetting commSetting = new CommSetting();
-        commSetting.setType(CommSetting.TCP);
-        commSetting.setDestIP(deviceInfo.IP);
-        commSetting.setDestPort(String.valueOf(deviceInfo.Port));
-        commSetting.setEnableProxy(false);
-        commSetting.setTimeOut(String.valueOf(deviceInfo.Timeout));
-        return  commSetting;
+public class POSLink extends CreditCard<PosLinkManageData> {
+    com.pax.poslink.PosLink posLink;
+
+    @Override
+    protected ProviderType getProviderType() {
+        return ProviderType.POSLink;
     }
 
-    private boolean isExecuteTransactionError(PosLink posLink, PaymentRequest paymentRequest)
-    {
-        ManageRequest manageRequest = new ManageRequest();
+    public POSLink(@NonNull DeviceInfo deviceInfo) {
+        super(deviceInfo);
+        posLink = createPosLink(getDeviceInfo());
+    }
+
+    @Override
+    protected void onManagementDataChanged(PosLinkManageData data) {
+        createManageRequest();
+    }
+
+    @Override
+    protected boolean getNeedManagementData() {
+        return true;
+    }
+
+    @SuppressWarnings("unchecked")
+    @SneakyThrows
+    @Override
+    protected <T1, T2 extends APIResponse<T4, T3>, T3, T4> T2 implementCallApi(T1 request) {
+        if(request instanceof PaymentRequest) {
+            posLink.PaymentRequest = (PaymentRequest) request;
+        }
+        if(request instanceof ManageRequest) {
+            posLink.ManageRequest = (ManageRequest) request;
+            posLink.ProcessTrans();
+        }
+
+        ProcessTransResult response = posLink.ProcessTrans();
+        //check transResult first
+        if(response.Code !=ProcessTransResult.ProcessTransResultCode.OK) {
+            return (T2) new APIResponse<>(request,posLink) {
+
+                @Override
+                public String getSuccessCode() {
+                    return ProcessTransResult.ProcessTransResultCode.OK.toString();
+                }
+
+                @Override
+                public String getProviderCode() {
+                    return response.Code.toString();
+                }
+
+                @Override
+                public String getProviderMessage() {
+                    return response.Msg;
+                }
+            };
+        }
+
+        if(request instanceof PaymentRequest) {
+            return (T2) new APIResponse<>(request,posLink) {
+                @Override
+                public String getSuccessCode() {
+                    return "000000";
+                }
+
+                @Override
+                public String getProviderCode() {
+                    return getResponse().PaymentResponse.ResultCode;
+                }
+
+                @Override
+                public String getProviderMessage() {
+                    return getResponse().PaymentResponse.ResultTxt;
+                }
+            };
+        }
+        if(request instanceof ManageRequest) {
+            return (T2) new APIResponse<>(request,posLink) {
+
+                @Override
+                public String getSuccessCode() {
+                    return "000000";
+                }
+
+                @Override
+                public String getProviderCode() {
+                    return getResponse().ManageResponse.ResultCode;
+                }
+
+                @Override
+                public String getProviderMessage() {
+                    return getResponse().ManageResponse.ResultTxt;
+                }
+            };
+        }
+        throw new Exception();
+    }
+
+
+    @Override
+    protected ProviderResult<Response> implementAuth(Request request) {
+        ProviderResult<Response> response = this.processManageData();
+        if(!response.getIsSuccess()) {
+            return response;
+        }
+        //create Request
+        PaymentRequest pay = new PaymentRequest();
+        pay.TenderType = pay.ParseTenderType("CREDIT");
+        pay.TransType = pay.ParseTransType(TransType.AUTH);
+        pay.Amount = convertBigDecimalValue(request.getAuthAmount());
+        pay.CashBackAmt="";
+        pay.FuelAmt = "";
+        pay.ClerkID = "";
+        pay.Zip="";
+        pay.TipAmt = "";
+        pay.TaxAmt = "";
+        pay.Street = "";
+        pay.Street2 = "";
+        pay.SurchargeAmt = "";
+        pay.InvNum = "";
+        pay.ECRRefNum = request.getRequestId();
+        pay.AuthCode = "";
+        pay.ECRTransID ="";
+        pay.OrigECRRefNum = "";
+        pay.ContinuousScreen = "";
+        pay.ServiceFee = "";
+        pay.GiftCardType = "";
+        pay.CVVBypassReason = "";
+        pay.GiftTenderType = "";
+        pay.OrigTraceNum = "";
+        pay.ExtData = "";
+        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,TransType.AUTH);
+        Response result = null;
+        if(apiResponse.getIsSuccess()) {
+            ExtData extData = null;
+            try {
+                extData = TagConverter.DeserializeObject(ExtData.class, "", posLink.PaymentResponse.ExtData);
+            }catch (Exception ignored) {}
+            ExtData finalExtData = extData;
+            result = new Response() {
+                @Override
+                public String getRefNumber() {
+                    return request.getRequestId();
+                }
+                @Override
+                public CreditCardUtil.CardIssuers getCardIssuers() {
+                    assert finalExtData != null;
+                    return CreditCardUtil.getCardIssuers(finalExtData.CARDBIN);
+                }
+                @Override
+                public String getCardNumber() {
+                    assert finalExtData != null;
+                    return CreditCardUtil.getPartialCardNumber(finalExtData.CARDBIN,"","");
+                }
+                @Override
+                public String getExpDate() {
+                    assert finalExtData != null;
+                    return finalExtData.ExpDate;
+                }
+            };
+        }
+        return new ProviderResult<>(apiResponse.getIsSuccess(),apiResponse.getProviderMessage(),result);
+    }
+
+    @Override
+    protected ProviderResult<com.hotsauce.creditcard.io.voidauth.Response> implementVoidAuth(com.hotsauce.creditcard.io.voidauth.Request request) {
+        return null;
+    }
+
+    @Override
+    protected ProviderResult<com.hotsauce.creditcard.io.capture.Response> implementCapture(com.hotsauce.creditcard.io.capture.Request request) {
+        return null;
+    }
+
+    @Override
+    protected ProviderResult<com.hotsauce.creditcard.io.sale.Response> implementSale(com.hotsauce.creditcard.io.sale.Request request) {
+        return null;
+    }
+
+    @Override
+    protected ProviderResult<com.hotsauce.creditcard.io.voidsale.Response> implementVoidSale(com.hotsauce.creditcard.io.voidsale.Request request) {
+        return null;
+    }
+
+    @Override
+    protected ProviderResult<com.hotsauce.creditcard.io.entertips.Response> implementEnterTips(com.hotsauce.creditcard.io.entertips.Request request) {
+        return null;
+    }
+
+    @Override
+    protected ProviderResult<com.hotsauce.creditcard.io.adjusttips.Response> implementAdjustTips(com.hotsauce.creditcard.io.adjusttips.Request request) {
+        return null;
+    }
+
+    @Override
+    protected ProviderResult<com.hotsauce.creditcard.io.batchsettlement.Response> implementBatch(com.hotsauce.creditcard.io.batchsettlement.Request request) {
+        return null;
+    }
+
+    @Override
+    protected ProviderResult<com.hotsauce.creditcard.io.cancel.Response> implementCancel(com.hotsauce.creditcard.io.cancel.Request request) {
+        posLink.CancelTrans();
+        return new ProviderResult<>(true,"Success",null);
+    }
+
+
+    //region "Manage Request"
+    private <T> ProviderResult<T> processManageData() {
+        APIResponse<ManageRequest,com.pax.poslink.PosLink> apiResponse = callApi(getManageRequest(),"MANAGEMENT");
+        return new ProviderResult<>(apiResponse.getIsSuccess(), apiResponse.getProviderMessage(),null);
+    }
+    private ManageRequest manageRequest;
+    private ManageRequest getManageRequest() {
+        return manageRequest;
+    }
+    private void createManageRequest() {
+        manageRequest = new ManageRequest();
         manageRequest.EDCType = manageRequest.ParseEDCType(EDCType.CREDIT);
         manageRequest.TransType = manageRequest.ParseTransType("SETVAR");
         //UserName
         manageRequest.VarName = "UserName";
         //TaLogin
-        manageRequest.VarValue = "TA5714099";
+        manageRequest.VarValue = getManagementData().getUserName();
         //UserPassword
         manageRequest.VarName1 = "UserPassword";
         //TaLogin Password
-        manageRequest.VarValue1 = "Hotsauce9!";
+        manageRequest.VarValue1 = getManagementData().getUserPassword();
         //MID
         manageRequest.VarName2 = "MID";
         //Merchant Number
-        manageRequest.VarValue2 = "887000001519";
+        manageRequest.VarValue2 = getManagementData().getMerchantId();
         //DeviceID
         manageRequest.VarName3 = "DeviceID";
         //MID + DeviceID
-        manageRequest.VarValue3 = "88700000151901";
-        posLink.ManageRequest = manageRequest;
-        posLink.ProcessTrans();
-
-        posLink.PaymentRequest = paymentRequest;
-        if(paymentRequest == null)
-        {
-            throw  new RuntimeException("Request Is null");
-        }
-        ProcessTransResult response = posLink.ProcessTrans();
-        _errorMessage = "";
-        providerCode = String.valueOf(response.Code);
-        if(response.Code !=ProcessTransResult.ProcessTransResultCode.OK)
-        {
-            _errorMessage = response.Msg;
-            return true;
-        }
-        PaymentResponse paymentResponse = posLink.PaymentResponse;
-        if(paymentResponse == null)
-        {
-            _errorMessage = "ChipReader did not send Response Back";
-            return true;
-        }
-        if(paymentResponse.ResultCode.equals("000000"))
-        {
-            return false;
-        }
-        _errorMessage = paymentResponse.ResultTxt;
-        return true;
+        manageRequest.VarValue3 = getManagementData().getDeviceId();
     }
-    private String convertBigDecimalValue(BigDecimal value)
-    {
+    //endregion
+
+    private com.pax.poslink.PosLink createPosLink(DeviceInfo deviceInfo) {
+        com.pax.poslink.PosLink posLink = new com.pax.poslink.PosLink();
+        posLink.SetCommSetting(createCommSetting(deviceInfo));
+        return posLink;
+    }
+
+    private CommSetting createCommSetting(DeviceInfo deviceInfo) {
+        CommSetting commSetting = new CommSetting();
+        commSetting.setType(CommSetting.TCP);
+        commSetting.setDestIP(deviceInfo.getIp());
+        commSetting.setDestPort(String.valueOf(deviceInfo.getPort()));
+        commSetting.setEnableProxy(false);
+        commSetting.setTimeOut(String.valueOf(deviceInfo.getTimeOut()));
+        return  commSetting;
+    }
+
+    private String convertBigDecimalValue(BigDecimal value) {
         BigDecimal multipliedValue = value.multiply(new BigDecimal("100"));
         return String.valueOf(multipliedValue.setScale(0, RoundingMode.HALF_UP));
     }
 
-    @Override
-    public Output authCard(Input input) {
-        Output output = new Output();
-        try
-        {
-            if(input == null)
-            {
-                output.ResultMessage = "Input Cannot be null";
-                output.ResultCode = ResultCode.InputError;
-                return output;
-            }
-            if(isDeviceInfoInvalid(input.deviceInfo))
-            {
-                output.ResultMessage = "Device Info Value Error:" + _errorMessage;
-                output.ResultCode = ResultCode.InputError;
-                return output;
-            }
-            PosLink posLink = createPosLink(input.deviceInfo);
-
-            //Start Generate Auth Request
-            PaymentRequest pay = new PaymentRequest();
-            pay.TenderType = pay.ParseTenderType("CREDIT");
-            pay.TransType = pay.ParseTransType(TransType.AUTH);
-            pay.Amount = convertBigDecimalValue(input.AuthAmount);
-            pay.CashBackAmt="";
-            pay.FuelAmt = "";
-            pay.ClerkID = "";
-            pay.Zip="";
-            pay.TipAmt = "";
-            pay.TaxAmt = "";
-            pay.Street = "";
-            pay.Street2 = "";
-            pay.SurchargeAmt = "";
-            pay.InvNum = "";
-            pay.ECRRefNum = input.TransactionID;
-            pay.AuthCode = "";
-            pay.ECRTransID ="";
-            pay.OrigECRRefNum = "";
-            pay.ContinuousScreen = "";
-            pay.ServiceFee = "";
-            pay.GiftCardType = "";
-            pay.CVVBypassReason = "";
-            pay.GiftTenderType = "";
-            pay.OrigTraceNum = "";
-            pay.ExtData = "";
-            if(isExecuteTransactionError(posLink, pay))
-            {
-                output.ProviderCode = providerCode;
-                output.ResultMessage = _errorMessage;
-                output.ResultCode = ResultCode.ProviderError;
-                return output;
-            }
-            try {
-                posLink.PaymentResponse.ExtData = "<>" + posLink.PaymentResponse.ExtData + "</>";
-                ExtData extData = TagConverter.DeserializeObject(ExtData.class,"",posLink.PaymentResponse.ExtData);
-                assert extData != null;
-                output.CardIssuers = CreditCardUtil.getCardIssuers(extData.CARDBIN);
-                output.CardNumber = CreditCardUtil.getPartialCardNumber(extData.CARDBIN,"","");
-                output.ExpDate = extData.ExpDate;
-            }catch (Exception ignored) {
-
-            }
-            output.ProviderCode = providerCode;
-            output.RefNumber = posLink.PaymentResponse.RefNum;
-            output.ResultMessage = "Success!";
-            output.ResultCode = ResultCode.Success;
-        }
-        catch(RuntimeException exception)
-        {
-            output.ResultMessage = exception.getMessage();
-            output.ResultCode = ResultCode.SystemError;
-        }
-        return  output;
-    }
-
-    @Override
-    public com.hotsauce.creditcard.io.capture.Output capture(com.hotsauce.creditcard.io.capture.Input input) {
-        com.hotsauce.creditcard.io.capture.Output output = new com.hotsauce.creditcard.io.capture.Output();
-        try
-        {
-            if(input == null)
-            {
-                output.ResultMessage = "Input Cannot be null";
-                output.ResultCode = ResultCode.InputError;
-                return output;
-            }
-            if(isDeviceInfoInvalid(input.deviceInfo))
-            {
-                output.ResultMessage = "Device Info Value Error:" + _errorMessage;
-                output.ResultCode = ResultCode.InputError;
-                return output;
-            }
-            if(BigDecimal.ZERO.compareTo(input.AuthAmount) > -1) {
-                output.ResultMessage = "InputValue Error: Auth amount must better than 0";
-                output.ResultCode = ResultCode.InputError;
-                return output;
-            }
-            PosLink posLink = createPosLink(input.deviceInfo);
-            PaymentRequest pay;
-            //if capture amount better than auth amount try to increase auth amount
-            if(input.Amount.compareTo(input.AuthAmount) == 1) {
-                pay = new PaymentRequest();
-                pay.TenderType = pay.ParseTenderType("CREDIT");
-                pay.TransType = 41;
-                pay.Amount = convertBigDecimalValue(input.Amount);
-                pay.CashBackAmt="";
-                pay.FuelAmt = "";
-                pay.ClerkID = "";
-                pay.Zip="";
-                pay.Street = "";
-                pay.Street2 = "";
-                pay.SurchargeAmt = "";
-                pay.InvNum = "";
-                pay.ECRRefNum = input.TransactionID;
-                pay.AuthCode = "";
-                pay.ECRTransID ="";
-                pay.OrigRefNum = input.RefNumber;
-                pay.OrigECRRefNum = "";
-                pay.ContinuousScreen = "";
-                pay.GiftCardType = "";
-                pay.CVVBypassReason = "";
-                pay.GiftTenderType = "";
-                pay.OrigTraceNum = "";
-                pay.ExtData = "";
-                if(isExecuteTransactionError(posLink, pay))
-                {
-                    output.ProviderCode = providerCode;
-                    output.ResultMessage = "Increase auth amount failed " + _errorMessage;
-                    output.ResultCode = ResultCode.ProviderError;
-                    return output;
-                }
-            }
-            //Start Generate capture Request
-            pay = new PaymentRequest();
-            pay.TenderType = pay.ParseTenderType("CREDIT");
-            pay.TransType = pay.ParseTransType(TransType.CAPTURE);
-            pay.Amount = convertBigDecimalValue(input.Amount);
-            pay.CashBackAmt="";
-            pay.FuelAmt = "";
-            pay.ClerkID = "";
-            pay.Zip="";
-            pay.TipAmt = convertBigDecimalValue(input.Tip);
-            pay.TaxAmt = convertBigDecimalValue(input.Tax);
-            pay.Street = "";
-            pay.Street2 = "";
-            pay.SurchargeAmt = "";
-            pay.InvNum = "";
-            pay.ECRRefNum = input.TransactionID;
-            pay.AuthCode = "";
-            pay.ECRTransID ="";
-            pay.OrigRefNum = input.RefNumber;
-            pay.OrigECRRefNum = "";
-            pay.ContinuousScreen = "";
-            pay.ServiceFee = convertBigDecimalValue(input.ServiceFee);
-            pay.GiftCardType = "";
-            pay.CVVBypassReason = "";
-            pay.GiftTenderType = "";
-            pay.OrigTraceNum = "";
-            pay.ExtData = "";
-            if(isExecuteTransactionError(posLink, pay))
-            {
-                output.ProviderCode = providerCode;
-                output.ResultMessage = _errorMessage;
-                output.ResultCode = ResultCode.ProviderError;
-                return output;
-            }
-            output.ProviderCode = providerCode;
-            output.RefNumber = posLink.PaymentResponse.RefNum;
-            output.ResultMessage = "Success!";
-            output.ResultCode = ResultCode.Success;
-        }
-        catch(RuntimeException exception)
-        {
-            output.ResultMessage = exception.getMessage();
-            output.ResultCode = ResultCode.SystemError;
-        }
-        return  output;
-    }
-
-    @Override
-    public com.hotsauce.creditcard.io.sale.Output sale(com.hotsauce.creditcard.io.sale.Input input) {
-        com.hotsauce.creditcard.io.sale.Output output = new com.hotsauce.creditcard.io.sale.Output();
-        try
-        {
-            if(input == null)
-            {
-                output.ResultMessage = "Input Cannot be null";
-                output.ResultCode = ResultCode.InputError;
-                return output;
-            }
-            if(isDeviceInfoInvalid(input.deviceInfo))
-            {
-                output.ResultMessage = "Device Info Value Error:" + _errorMessage;
-                output.ResultCode = ResultCode.InputError;
-                return output;
-            }
-            PosLink posLink = createPosLink(input.deviceInfo);
-
-            //Start Generate Pay Request
-            PaymentRequest pay = new PaymentRequest();
-            pay.TenderType = pay.ParseTenderType("CREDIT");
-            pay.TransType = pay.ParseTransType(TransType.SALE);
-            pay.Amount = convertBigDecimalValue(input.Amount);
-            pay.CashBackAmt="";
-            pay.FuelAmt = "";
-            pay.ClerkID = "";
-            pay.Zip="";
-            pay.TipAmt = convertBigDecimalValue(input.Tip);
-            pay.TaxAmt = convertBigDecimalValue(input.Tax);
-            pay.Street = "";
-            pay.Street2 = "";
-            pay.SurchargeAmt = "";
-            pay.InvNum = "";
-            pay.ECRRefNum = input.TransactionID;
-            pay.AuthCode = "";
-            pay.ECRTransID =input.TransactionID;
-            pay.OrigECRRefNum = "";
-            //pay.CommercialCard = null;
-            pay.ContinuousScreen = "";
-            pay.ServiceFee = convertBigDecimalValue(input.ServiceFee);
-            pay.GiftCardType = "";
-            pay.CVVBypassReason = "";
-            pay.GiftTenderType = "";
-            pay.OrigTraceNum = "";
-            pay.ExtData = "";
-            if(isExecuteTransactionError(posLink, pay))
-            {
-                output.ProviderCode = providerCode;
-                output.ResultMessage = _errorMessage;
-                output.ResultCode = ResultCode.ProviderError;
-                return output;
-            }
-            try {
-                posLink.PaymentResponse.ExtData = "<>" + posLink.PaymentResponse.ExtData + "</>";
-                ExtData extData = TagConverter.DeserializeObject(ExtData.class,"",posLink.PaymentResponse.ExtData);
-                assert extData != null;
-                output.CardIssuers = CreditCardUtil.getCardIssuers(extData.CARDBIN);
-                output.CardNumber = CreditCardUtil.getPartialCardNumber(extData.CARDBIN,"","");
-                output.ExpDate = extData.ExpDate;
-            }catch (Exception ignored) {
-
-            }
-            output.ProviderCode = providerCode;
-            output.RefNumber = posLink.PaymentResponse.RefNum;
-            output.ResultMessage = "Success!";
-            output.ResultCode = ResultCode.Success;
-        }
-        catch(RuntimeException exception)
-        {
-            output.ResultMessage = exception.getMessage();
-            output.ResultCode = ResultCode.SystemError;
-        }
-        return  output;
-    }
-
-    @Override
-    public com.hotsauce.creditcard.io.entertips.Output enterTips(com.hotsauce.creditcard.io.entertips.Input input) {
-        com.hotsauce.creditcard.io.entertips.Output output = new com.hotsauce.creditcard.io.entertips.Output();
-        try
-        {
-            if(input == null)
-            {
-                output.ResultMessage = "Input Cannot be null";
-                output.ResultCode = ResultCode.InputError;
-                return output;
-            }
-            if(isDeviceInfoInvalid(input.deviceInfo))
-            {
-                output.ResultMessage = "Device Info Value Error:" + _errorMessage;
-                output.ResultCode = ResultCode.InputError;
-                return output;
-            }
-            PosLink posLink = createPosLink(input.deviceInfo);
-
-            //Start Generate EnterTip Request
-            PaymentRequest pay = new PaymentRequest();
-            pay.TenderType = pay.ParseTenderType("CREDIT");
-            pay.TransType = pay.ParseTransType(TransType.ADJUST);
-            pay.Amount = convertBigDecimalValue(input.Tip);
-            pay.CashBackAmt="";
-            pay.FuelAmt = "";
-            pay.ClerkID = "";
-            pay.Zip="";
-            pay.TipAmt = "";
-            pay.TaxAmt = "";
-            pay.Street = "";
-            pay.Street2 = "";
-            pay.SurchargeAmt = "";
-            pay.InvNum = "";
-            pay.ECRRefNum = input.TransactionID;
-            pay.AuthCode = "";
-            pay.ECRTransID ="";
-            pay.OrigRefNum = input.RefNumber;
-            pay.OrigECRRefNum = "";
-            //pay.CommercialCard = null;
-            pay.ContinuousScreen = "";
-            pay.ServiceFee =  "";
-            pay.GiftCardType = "";
-            pay.CVVBypassReason = "";
-            pay.GiftTenderType = "";
-            pay.OrigTraceNum = "";
-            pay.ExtData = "";
-            if(isExecuteTransactionError(posLink, pay))
-            {
-                output.ProviderCode = providerCode;
-                output.ResultMessage = _errorMessage;
-                output.ResultCode = ResultCode.ProviderError;
-                return output;
-            }
-            output.ProviderCode = providerCode;
-            output.RefNumber = posLink.PaymentResponse.RefNum;
-            output.ResultMessage = "Success!";
-            output.ResultCode = ResultCode.Success;
-        }
-        catch(RuntimeException exception)
-        {
-            output.ResultMessage = exception.getMessage();
-            output.ResultCode = ResultCode.SystemError;
-        }
-        return  output;
-    }
-
-    @Override
-    public com.hotsauce.creditcard.io.adjusttips.Output adjustTips(com.hotsauce.creditcard.io.adjusttips.Input input) {
-        com.hotsauce.creditcard.io.adjusttips.Output output = new com.hotsauce.creditcard.io.adjusttips.Output();
-        try
-        {
-            if(input == null)
-            {
-                output.ResultMessage = "Input Cannot be null";
-                output.ResultCode = ResultCode.InputError;
-                return output;
-            }
-            if(isDeviceInfoInvalid(input.deviceInfo))
-            {
-                output.ResultMessage = "Device Info Value Error:" + _errorMessage;
-                output.ResultCode = ResultCode.InputError;
-                return output;
-            }
-            PosLink posLink = createPosLink(input.deviceInfo);
-
-            //Start Generate AdjustTip Request
-            PaymentRequest pay = new PaymentRequest();
-            pay.TenderType = pay.ParseTenderType("CREDIT");
-            pay.TransType = pay.ParseTransType(TransType.ADJUST);
-            pay.Amount = convertBigDecimalValue(input.Tip);
-            pay.CashBackAmt="";
-            pay.FuelAmt = "";
-            pay.ClerkID = "";
-            pay.Zip="";
-            pay.TipAmt = "";
-            pay.TaxAmt = "";
-            pay.Street = "";
-            pay.Street2 = "";
-            pay.SurchargeAmt = "";
-            pay.InvNum = "";
-            pay.ECRRefNum = input.TransactionID;
-            pay.AuthCode = "";
-            pay.ECRTransID ="";
-            pay.OrigRefNum = input.RefNumber;
-            pay.OrigECRRefNum = "";
-            pay.ContinuousScreen = "";
-            pay.ServiceFee =  "";
-            pay.GiftCardType = "";
-            pay.CVVBypassReason = "";
-            pay.GiftTenderType = "";
-            pay.OrigTraceNum = "";
-            pay.ExtData = "";
-            if(isExecuteTransactionError(posLink, pay))
-            {
-                output.ResultMessage = _errorMessage;
-                output.ResultCode = ResultCode.ProviderError;
-                return output;
-            }
-            output.RefNumber = posLink.PaymentResponse.RefNum;
-            output.ResultMessage = "Success!";
-            output.ResultCode = ResultCode.Success;
-        }
-        catch(RuntimeException exception)
-        {
-            output.ResultMessage = exception.getMessage();
-            output.ResultCode = ResultCode.SystemError;
-        }
-        return  output;
-    }
-
-    @Override
-    public com.hotsauce.creditcard.io.voidsale.Output voidSale(com.hotsauce.creditcard.io.voidsale.Input input) {
-        com.hotsauce.creditcard.io.voidsale.Output output = new com.hotsauce.creditcard.io.voidsale.Output();
-        try
-        {
-            if(input == null)
-            {
-                output.ResultMessage = "Input Cannot be null";
-                output.ResultCode = ResultCode.InputError;
-                return output;
-            }
-            if(isDeviceInfoInvalid(input.deviceInfo))
-            {
-                output.ResultMessage = "Device Info Value Error:" + _errorMessage;
-                output.ResultCode = ResultCode.InputError;
-                return output;
-            }
-            PosLink posLink = createPosLink(input.deviceInfo);
-
-            //Start Generate AdjustTip Request
-            PaymentRequest pay = new PaymentRequest();
-            pay.TenderType = pay.ParseTenderType("CREDIT");
-            pay.TransType = pay.ParseTransType(TransType.VOID);
-            if (input.IsSettled)
-            {
-                pay.TransType = pay.ParseTransType(TransType.RETURN);
-            }
-            pay.ECRRefNum = input.TransactionID;
-            pay.OrigRefNum = input.RefNumber;
-            if(isExecuteTransactionError(posLink, pay))
-            {
-                output.ProviderCode = providerCode;
-                output.ResultMessage = _errorMessage;
-                output.ResultCode = ResultCode.ProviderError;
-                return output;
-            }
-            output.ProviderCode = providerCode;
-            output.ResultMessage = "Success!";
-            output.ResultCode = ResultCode.Success;
-        }
-        catch(RuntimeException exception)
-        {
-            output.ResultMessage = exception.getMessage();
-            output.ResultCode = ResultCode.SystemError;
-        }
-        return  output;
-    }
-
-    @Override
-    public com.hotsauce.creditcard.io.batchsettlement.Output batchSettlement(com.hotsauce.creditcard.io.batchsettlement.Input input) {
-        com.hotsauce.creditcard.io.batchsettlement.Output output = new com.hotsauce.creditcard.io.batchsettlement.Output();
-        try
-        {
-            if(input == null)
-            {
-                output.ResultMessage = "Input Cannot be null";
-                output.ResultCode = ResultCode.InputError;
-                return output;
-            }
-            if(isDeviceInfoInvalid(input.deviceInfo))
-            {
-                output.ResultMessage = "Device Info Value Error:" + _errorMessage;
-                output.ResultCode = ResultCode.InputError;
-                return output;
-            }
-            PosLink posLink = createPosLink(input.deviceInfo);
-            BatchRequest batchRequest = new BatchRequest();
-            batchRequest.TransType = batchRequest.ParseTransType(TransType.BATCH_CLOSE);
-            posLink.BatchRequest = batchRequest;
-            ProcessTransResult response = posLink.ProcessTrans();
-            if(response.Code !=ProcessTransResult.ProcessTransResultCode.OK)
-            {
-                output.ProviderCode = providerCode;
-                output.ResultMessage = response.Msg;
-                output.ResultCode = ResultCode.ProviderError;
-                return output;
-            }
-            output.ProviderCode = providerCode;
-            output.ResultMessage = "Success!";
-            output.ResultCode = ResultCode.Success;
-        }
-        catch(RuntimeException exception)
-        {
-            output.ResultMessage = exception.getMessage();
-            output.ResultCode = ResultCode.SystemError;
-        }
-        return  output;
-    }
-
-    @Override
-    public com.hotsauce.creditcard.io.voidauth.Output voidAuth(com.hotsauce.creditcard.io.voidauth.Input input) {
-        com.hotsauce.creditcard.io.voidauth.Output output = new com.hotsauce.creditcard.io.voidauth.Output();
-        try
-        {
-            if(input == null)
-            {
-                output.ResultMessage = "Input Cannot be null";
-                output.ResultCode = ResultCode.InputError;
-                return output;
-            }
-            if(isDeviceInfoInvalid(input.deviceInfo))
-            {
-                output.ResultMessage = "Device Info Value Error:" + _errorMessage;
-                output.ResultCode = ResultCode.InputError;
-                return output;
-            }
-            PosLink posLink = createPosLink(input.deviceInfo);
-
-            //Start Generate AdjustTip Request
-            PaymentRequest pay = new PaymentRequest();
-            pay.TenderType = pay.ParseTenderType("CREDIT");
-            pay.TransType = pay.ParseTransType(TransType.VOID_AUTH);
-            pay.ECRRefNum = input.TransactionID;
-            pay.OrigRefNum = input.RefNumber;
-            if(isExecuteTransactionError(posLink, pay))
-            {
-                output.ProviderCode = providerCode;
-                output.ResultMessage = _errorMessage;
-                output.ResultCode = ResultCode.ProviderError;
-                return output;
-            }
-            output.ProviderCode = providerCode;
-            output.ResultMessage = "Success!";
-            output.ResultCode = ResultCode.Success;
-        }
-        catch(RuntimeException exception)
-        {
-            output.ResultMessage = exception.getMessage();
-            output.ResultCode = ResultCode.SystemError;
-        }
-        return  output;
-    }
-
-    private static class TransType{
+    static class TransType{
         public static final String AUTH="AUTH";
 
         public static final String CAPTURE="POSTAUTH";
@@ -639,10 +291,10 @@ public class POSLink implements ICreditCard {
 
         public static final String VOID_AUTH = "VOID AUTH";
 
-        public static final String INCREMENTAL_AUTH = "INCREMENTALAUTH";
         public static final String BATCH_CLOSE = "BATCHCLOSE";
     }
-    public static class ExtData{
+
+    static class ExtData{
         public String ExpDate;
         public String BatchNum;
         public String CARDBIN;

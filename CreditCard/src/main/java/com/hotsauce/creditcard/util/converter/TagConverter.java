@@ -22,7 +22,7 @@ public class TagConverter {
         return "<" + rootName + ">" + valueString + "</" + rootName + ">";
     }
     private static String generateWithTagObjectString(Object value, int whiteSpace) {
-        String returnString = "";
+        StringBuilder returnString = new StringBuilder();
         Class<?> objectType = value.getClass();
         Field[] fieldInfoList = objectType.getFields();
         Object fieldValue;
@@ -35,30 +35,30 @@ public class TagConverter {
             if (ignoreNull && fieldValue == null) {
                 continue;
             }
-            returnString += " ".repeat(whiteSpace) + "<" + fieldInfo.getName() + ">";
+            returnString.append(" ".repeat(whiteSpace)).append("<").append(fieldInfo.getName()).append(">");
             if (fieldValue.getClass().getPackageName().startsWith("java.lang")) {
                 if (fieldValue == null) {
                     fieldValue = "";
                 }
-                returnString += fieldValue.toString();
-                returnString += "</" + fieldInfo.getName() + ">";
+                returnString.append(fieldValue);
+                returnString.append("</").append(fieldInfo.getName()).append(">");
             } else {
                 if (format) {
                     int newWhiteSpace = whiteSpace + 1;
-                    returnString += System.lineSeparator() + generateWithTagObjectString(fieldValue, newWhiteSpace);
-                    returnString += " ".repeat(whiteSpace) + "</" + fieldInfo.getName() + ">";
+                    returnString.append(System.lineSeparator()).append(generateWithTagObjectString(fieldValue, newWhiteSpace));
+                    returnString.append(" ".repeat(whiteSpace)).append("</").append(fieldInfo.getName()).append(">");
                 } else {
-                    returnString += generateWithTagObjectString(fieldValue, whiteSpace);
-                    returnString += "</" + fieldInfo.getName() + ">";
+                    returnString.append(generateWithTagObjectString(fieldValue, whiteSpace));
+                    returnString.append("</").append(fieldInfo.getName()).append(">");
                 }
             }
             if (format) {
-                returnString += System.lineSeparator();
+                returnString.append(System.lineSeparator());
             }
         }
-        return returnString;
+        return returnString.toString();
     }
-    public static <T> T DeserializeObject(Class<?> type,String rootName, String value) throws InstantiationException, IllegalAccessException {
+    public static <T> T DeserializeObject(Class<?> type,String rootName, String value) {
        try {
            return (T) CreateInstance(type , rootName, value);
        }
@@ -121,7 +121,7 @@ public class TagConverter {
         }
         else if (type.equals(String.class))
         {
-            NewObject= value.toString();
+            NewObject= value;
         }
         else
         {
@@ -130,18 +130,18 @@ public class TagConverter {
             Map.Entry<String, Integer> PreReadResult;
             String FieldValue;
             String TagName;
-            String TagNameWithTag = "";
+            StringBuilder TagNameWithTag = new StringBuilder();
             boolean StartReadingTag = false;
             for (int i = 0; i < value.length(); i++) {
                 if (value.charAt(i) == '<') {
                     StartReadingTag = !StartReadingTag;
                 }
                 if (StartReadingTag) {
-                    TagNameWithTag += value.charAt(i);
+                    TagNameWithTag.append(value.charAt(i));
                     if (value.charAt(i) == '>') {
                         StartReadingTag = false;
-                        TagName = TagNameWithTag.trim().substring(1, TagNameWithTag.length() - 1);
-                        PreReadResult = PreReadString(TagName, value.substring(i + 1, value.length()));
+                        TagName = TagNameWithTag.toString().trim().substring(1, TagNameWithTag.length() - 1);
+                        PreReadResult = PreReadString(TagName, value.substring(i + 1));
                         FieldValue = TagNameWithTag + PreReadResult.getKey();
                         i += PreReadResult.getValue();
                         // SetField
@@ -154,11 +154,10 @@ public class TagConverter {
                         } catch (IllegalAccessException e) {
                             // Do nothing
                         }
-                        TagNameWithTag = "";
-                        continue;
+                        TagNameWithTag = new StringBuilder();
                     }
                 } else {
-                    TagNameWithTag = "";
+                    TagNameWithTag = new StringBuilder();
                 }
             }
         }
@@ -171,7 +170,7 @@ public class TagConverter {
         // </tagName>
         int EndTagLength = tagName.length() + 3;
         String TempString = "";
-        String ReturnString = "";
+        StringBuilder ReturnString = new StringBuilder();
         for (int i = 0; i < nextString.length(); i++) {
             if (nextString.charAt(i) == '<') {
                 if (EndTagLength + i > nextString.length()) {
@@ -179,12 +178,12 @@ public class TagConverter {
                 }
                 TempString = nextString.substring(i, i + EndTagLength);
                 if (TempString.equals("</" + tagName + ">")) {
-                    return new AbstractMap.SimpleEntry<String,Integer>(ReturnString + TempString,i + EndTagLength);
+                    return new AbstractMap.SimpleEntry<>(ReturnString + TempString, i + EndTagLength);
                 } else {
                     TempString = "";
                 }
             }
-            ReturnString += nextString.charAt(i);
+            ReturnString.append(nextString.charAt(i));
         }
         throw new IllegalArgumentException("Invalid Format");
     }

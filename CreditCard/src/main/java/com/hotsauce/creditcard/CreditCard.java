@@ -11,10 +11,10 @@ import lombok.SneakyThrows;
 import java.util.ArrayList;
 import java.util.concurrent.TimeoutException;
 
-public abstract class ICreditCard<M> {
+public abstract class CreditCard<M> {
     protected abstract ProviderType getProviderType();
 
-    public ICreditCard(@NonNull DeviceInfo deviceInfo) {
+    public CreditCard(@NonNull DeviceInfo deviceInfo) {
         this.deviceInfo = deviceInfo;
     }
 
@@ -26,7 +26,7 @@ public abstract class ICreditCard<M> {
             setResponseData(ResultCode.INPUT_ERROR,"Request can not be null");
             return (Res) getResponse();
         }
-        if(getNeedManagementData()) {
+        if(getNeedManagementData() && getManagementData() == null) {
             setResponseData(ResultCode.INPUT_ERROR,"Management Data can not be null");
             return (Res) getResponse();
         }
@@ -150,8 +150,8 @@ public abstract class ICreditCard<M> {
 
     //region "Call API"
     @SneakyThrows
-    protected <T1,T2 extends APIResponse<T4,T3>,T3,T4> T2 callApi(T1 request) {
-        T2 response = null;
+    protected <Req, Res extends APIResponse<Req1, Res1>, Res1, Req1> Res callApi(Req request, String action) {
+        Res response = null;
         try {
             while (true) {
                 try {
@@ -168,18 +168,21 @@ public abstract class ICreditCard<M> {
             }
         } finally {
             int seq = getResponse().getLogList().size();
-            getResponse().getLogList().add(Response.Log
-                    .builder()
-                    .requestId(getResponse().getRequestId())
-                    .sequence(seq)
-                    .providerCode(response == null ? null : response.getProviderCode())
-                    .providerMessage(response == null ? null : response.getProviderMessage())
-                    .request(response.getRequest())
-                    .response(response.getResponse())
-                    .build());
+            if(response != null) {
+                getResponse().getLogList().add(Response.Log
+                        .builder()
+                        .requestId(getResponse().getRequestId())
+                        .sequence(seq)
+                        .action(action)
+                        .providerCode(response.getProviderCode())
+                        .providerMessage(response.getProviderMessage())
+                        .request(response.getRequest())
+                        .response(response.getResponse())
+                        .build());
             }
+        }
     }
-    @SneakyThrows
+
     protected abstract <T1,T2 extends APIResponse<T4,T3>,T3,T4> T2 implementCallApi(T1 request);
     //endregion
 
@@ -232,6 +235,7 @@ public abstract class ICreditCard<M> {
     }
     protected abstract ProviderResult<com.hotsauce.creditcard.io.batchsettlement.Response> implementBatch(com.hotsauce.creditcard.io.batchsettlement.Request request);
 
+    protected abstract ProviderResult<com.hotsauce.creditcard.io.cancel.Response> implementCancel(com.hotsauce.creditcard.io.cancel.Request request);
     //endregion
 
 
@@ -266,20 +270,20 @@ public abstract class ICreditCard<M> {
         }
     }
 
-    protected abstract static class APIResponse<T1,T2> {
-        private final T1 request;
-        private final T2 response;
-        public APIResponse(T1 request, T2 response) {
+    protected abstract static class APIResponse<Req, Res> {
+        private final Req request;
+        private final Res response;
+        public APIResponse(Req request, Res response) {
             this.request = request;
             this.response = response;
         }
        public abstract String getSuccessCode();
        public abstract String getProviderCode();
        public abstract String getProviderMessage();
-       public T1 getRequest() {
+       public Req getRequest() {
             return request;
         }
-       public T2 getResponse() {
+       public Res getResponse() {
             return response;
         }
        public boolean getIsSuccess() {

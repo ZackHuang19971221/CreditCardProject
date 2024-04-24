@@ -1,12 +1,13 @@
-package com.hotsauce.creditcard;
+package com.hotsauce.creditcard.providers;
 
+import com.hotsauce.creditcard.CreditCard;
 import com.hotsauce.creditcard.io.DeviceInfo;
 import lombok.NonNull;
 
 public class CreditCardFactory {
-    public  static ICreditCard createInstance(@NonNull ProviderType type,@NonNull DeviceInfo deviceInfo)
+    public static CreditCard<?> createInstance(@NonNull ProviderType type, @NonNull DeviceInfo deviceInfo)
     {
-        ICreditCard instance = null;
+        CreditCard<?> instance = null;
         switch (type){
             case Developer:
                 //instance = new com.hotsauce.creditcard.providers.Developer();
