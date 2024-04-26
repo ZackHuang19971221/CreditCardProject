@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Promise:jar">
+    <output-path>$PROJECT_DIR$/..</output-path>
+    <root id="archive" name="Promise_jar.jar">
+      <element id="archive" name="Promise.jar">
+        <element id="module-output" name="Promise" />
+      </element>
+    </root>
+  </artifact>
+</component>
