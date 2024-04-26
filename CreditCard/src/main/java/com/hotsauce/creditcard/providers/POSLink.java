@@ -14,9 +14,6 @@ import lombok.SneakyThrows;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 
 public class POSLink extends CreditCard<PosLinkManageData> {
@@ -39,7 +36,7 @@ public class POSLink extends CreditCard<PosLinkManageData> {
 
     @Override
     protected boolean getNeedManagementData() {
-        return true;
+        return false;
     }
 
     @SuppressWarnings("unchecked")
@@ -207,10 +204,6 @@ public class POSLink extends CreditCard<PosLinkManageData> {
     @Override
     protected ProviderResult<com.hotsauce.creditcard.io.voidauth.Response> implementVoidAuth(com.hotsauce.creditcard.io.voidauth.Request request) {
         TransType transType = TransType.VOID_AUTH;
-        ProviderResult<com.hotsauce.creditcard.io.voidauth.Response> response = this.processManageData();
-        if(!response.getIsSuccess()) {
-            return response;
-        }
         PaymentRequest pay = new PaymentRequest();
         pay.TenderType = pay.ParseTenderType("CREDIT");
         pay.TransType = pay.ParseTransType(transType.getCode());
@@ -227,10 +220,6 @@ public class POSLink extends CreditCard<PosLinkManageData> {
     @Override
     protected ProviderResult<com.hotsauce.creditcard.io.capture.Response> implementCapture(com.hotsauce.creditcard.io.capture.Request request) {
         TransType transType = TransType.CAPTURE;
-        ProviderResult<com.hotsauce.creditcard.io.capture.Response> response = this.processManageData();
-        if(!response.getIsSuccess()) {
-            return response;
-        }
         PaymentRequest pay = new PaymentRequest();
         pay.TenderType = pay.ParseTenderType("CREDIT");
         pay.TransType = pay.ParseTransType(transType.getCode());
@@ -251,10 +240,6 @@ public class POSLink extends CreditCard<PosLinkManageData> {
     @Override
     protected ProviderResult<com.hotsauce.creditcard.io.sale.Response> implementSale(com.hotsauce.creditcard.io.sale.Request request) {
         TransType transType = TransType.SALE;
-        ProviderResult<com.hotsauce.creditcard.io.sale.Response> response = this.processManageData();
-        if(!response.getIsSuccess()) {
-            return response;
-        }
         PaymentRequest pay = new PaymentRequest();
         pay.TenderType = pay.ParseTenderType("CREDIT");
         pay.TransType = pay.ParseTransType(transType.getCode());
@@ -300,10 +285,6 @@ public class POSLink extends CreditCard<PosLinkManageData> {
     @Override
     protected ProviderResult<com.hotsauce.creditcard.io.voidsale.Response> implementVoidSale(com.hotsauce.creditcard.io.voidsale.Request request) {
         TransType transType = request.getIsSettled() ? TransType.RETURN : TransType.VOID;
-        ProviderResult<com.hotsauce.creditcard.io.voidsale.Response> response = this.processManageData();
-        if(!response.getIsSuccess()) {
-            return response;
-        }
         PaymentRequest pay = new PaymentRequest();
         pay.TenderType = pay.ParseTenderType("CREDIT");
         pay.TransType = pay.ParseTransType(transType.getCode());
@@ -320,10 +301,6 @@ public class POSLink extends CreditCard<PosLinkManageData> {
     @Override
     protected ProviderResult<com.hotsauce.creditcard.io.entertips.Response> implementEnterTips(com.hotsauce.creditcard.io.entertips.Request request) {
         TransType transType = TransType.ADJUST;
-        ProviderResult<com.hotsauce.creditcard.io.entertips.Response> response = this.processManageData();
-        if(!response.getIsSuccess()) {
-            return response;
-        }
         PaymentRequest pay = new PaymentRequest();
         pay.TenderType = pay.ParseTenderType("CREDIT");
         pay.TransType = pay.ParseTransType(transType.getCode());
@@ -341,10 +318,6 @@ public class POSLink extends CreditCard<PosLinkManageData> {
     @Override
     protected ProviderResult<com.hotsauce.creditcard.io.adjusttips.Response> implementAdjustTips(com.hotsauce.creditcard.io.adjusttips.Request request) {
         TransType transType = TransType.ADJUST;
-        ProviderResult<com.hotsauce.creditcard.io.adjusttips.Response> response = this.processManageData();
-        if(!response.getIsSuccess()) {
-            return response;
-        }
         PaymentRequest pay = new PaymentRequest();
         pay.TenderType = pay.ParseTenderType("CREDIT");
         pay.TransType = pay.ParseTransType(transType.getCode());
@@ -362,10 +335,6 @@ public class POSLink extends CreditCard<PosLinkManageData> {
     @Override
     protected ProviderResult<com.hotsauce.creditcard.io.batchsettlement.Response> implementBatch(com.hotsauce.creditcard.io.batchsettlement.Request request) {
         TransType transType = TransType.BATCH_CLOSE;
-        ProviderResult<com.hotsauce.creditcard.io.batchsettlement.Response> response = this.processManageData();
-        if(!response.getIsSuccess()) {
-            return response;
-        }
         BatchRequest batchRequest = new BatchRequest();
         batchRequest.TransType = batchRequest.ParseTransType(transType.getCode());
         APIResponse<BatchRequest,com.pax.poslink.PosLink> apiResponse = callApi(batchRequest,transType.getCode());
@@ -441,8 +410,8 @@ public class POSLink extends CreditCard<PosLinkManageData> {
         VOID("VOID"),
         ADJUST("ADJUST"),
         RETURN("RETURN"),
-        VOID_AUTH("VOID_AUTH"),
-        BATCH_CLOSE("BATCH_CLOSE");
+        VOID_AUTH("VOID AUTH"),
+        BATCH_CLOSE("BATCHCLOSE");
         private final String code;
         TransType(String code) {
             this.code = code;

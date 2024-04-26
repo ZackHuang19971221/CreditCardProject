@@ -5,16 +5,11 @@ import com.hotsauce.creditcard.io.ResultCode;
 import com.hotsauce.creditcard.io.base.Request;
 import com.hotsauce.creditcard.io.base.Response;
 import com.hotsauce.creditcard.providers.ProviderType;
-import com.hotsauce.creditcard.util.IDataReadCallBack;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 
 import java.util.ArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.*;
 
 public abstract class CreditCard<M> {
     protected abstract ProviderType getProviderType();
@@ -24,27 +19,18 @@ public abstract class CreditCard<M> {
     }
 
     @SuppressWarnings("unchecked")
-    private <Req extends Request, ResT, Res extends com.hotsauce.creditcard.io.base.Response<ResT>> void runFunction(Req request, Action action, IDataReadCallBack<Res> callBack) {
+    private <Req extends Request, ResT, Res extends com.hotsauce.creditcard.io.base.Response<ResT>> Res runFunction(Req request, Action action) {
         //set the first in request
-        AtomicBoolean isCancel = new AtomicBoolean(false);
         this.<Res>setFirstInRequest(request,false);
         if(request == null) {
             setResponseData(ResultCode.INPUT_ERROR,"Request can not be null");
-            callBack.onDataRead((Res) getResponse());
+            return (Res) getResponse();
         }
         if(getNeedManagementData() && getManagementData() == null) {
             setResponseData(ResultCode.INPUT_ERROR,"Management Data can not be null");
-            callBack.onDataRead((Res) getResponse());
+            return (Res) getResponse();
         }
         //time out handle
-        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-        executor.schedule(() -> {
-                    isCancel.set(true);
-                    implementCancel();
-                    setResponseData(ResultCode.TIME_OUT);
-                    callBack.onDataRead((Res) getResponse());
-                }
-                , getDeviceInfo().getTimeOut(), TimeUnit.MILLISECONDS);
         try {
             //Default Result
             ProviderResult<ResT> providerResult = new ProviderResult<>(false,"Fail",null);
@@ -80,8 +66,7 @@ public abstract class CreditCard<M> {
             }else {
                 setResponseData(ResultCode.PROVIDER_ERROR,providerResult.getMessage());
             }
-            if(isCancel.get()){return;}
-            callBack.onDataRead((Res) getResponse());
+            return (Res) getResponse();
         }catch (Exception exception) {
             if(!(exception instanceof TimeoutException)) {
                 getResponse().setResultCode(ResultCode.SYSTEM_ERROR.getCode());
@@ -90,11 +75,10 @@ public abstract class CreditCard<M> {
                 getResponse().setResultMessage("Connect Fail");
                 getResponse().setResultCode(ResultCode.NETWORK_ERROR.getCode());
             }
-            if(isCancel.get()){return;}
-            callBack.onDataRead((Res) getResponse());
         }finally {
             setFirstInRequest(null,true);
         }
+        return (Res) getResponse();
     }
 
     //region "Device Info"
@@ -205,50 +189,74 @@ public abstract class CreditCard<M> {
 
 
     //region "function"
-    public void auth(com.hotsauce.creditcard.io.auth.Request request,@NonNull IDataReadCallBack<Response<com.hotsauce.creditcard.io.auth.Response>> callBack) {
-        runFunction(request,Action.AUTH,callBack);
+    public Response<com.hotsauce.creditcard.io.auth.Response> auth(com.hotsauce.creditcard.io.auth.Request request) {
+        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+        ScheduledFuture<?> future = executor.schedule(() -> {
+            implementCancel();
+            setResponseData(ResultCode.TIME_OUT);
+        }, getDeviceInfo().getTimeOut(), TimeUnit.MILLISECONDS);
+
+        try {
+            Response<com.hotsauce.creditcard.io.auth.Response> response = runFunction(request, Action.AUTH);
+            future.cancel(true);
+            return response;
+        } finally {
+            executor.shutdown();
+        }
     }
     protected abstract ProviderResult<com.hotsauce.creditcard.io.auth.Response> implementAuth(com.hotsauce.creditcard.io.auth.Request request);
 
 
-    public void voidAuth(com.hotsauce.creditcard.io.voidauth.Request request,@NonNull IDataReadCallBack<Response<com.hotsauce.creditcard.io.voidauth.Response>> callBack) {
-        runFunction(request,Action.VOID_AUTH,callBack);
+    public Response<com.hotsauce.creditcard.io.voidauth.Response> voidAuth(com.hotsauce.creditcard.io.voidauth.Request request) {
+        return runFunction(request,Action.VOID_AUTH);
     }
     protected abstract ProviderResult<com.hotsauce.creditcard.io.voidauth.Response> implementVoidAuth(com.hotsauce.creditcard.io.voidauth.Request request);
 
 
-    public void capture(com.hotsauce.creditcard.io.capture.Request request,@NonNull IDataReadCallBack<Response<com.hotsauce.creditcard.io.capture.Response>> callBack) {
-        runFunction(request,Action.CAPTURE,callBack);
+    public Response<com.hotsauce.creditcard.io.capture.Response> capture(com.hotsauce.creditcard.io.capture.Request request) {
+        return runFunction(request,Action.CAPTURE);
     }
     protected abstract ProviderResult<com.hotsauce.creditcard.io.capture.Response> implementCapture(com.hotsauce.creditcard.io.capture.Request request);
 
 
-    public void sale(com.hotsauce.creditcard.io.sale.Request request,@NonNull IDataReadCallBack<Response<com.hotsauce.creditcard.io.sale.Response>> callBack) {
-        runFunction(request,Action.SALE,callBack);
+    public Response<com.hotsauce.creditcard.io.sale.Response> sale(com.hotsauce.creditcard.io.sale.Request request) {
+        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+        ScheduledFuture<?> future = executor.schedule(() -> {
+            implementCancel();
+            setResponseData(ResultCode.TIME_OUT);
+        }, getDeviceInfo().getTimeOut(), TimeUnit.MILLISECONDS);
+
+        try {
+            Response<com.hotsauce.creditcard.io.sale.Response> response = runFunction(request,Action.SALE);
+            future.cancel(true);
+            return response;
+        } finally {
+            executor.shutdown();
+        }
     }
     protected abstract ProviderResult<com.hotsauce.creditcard.io.sale.Response> implementSale(com.hotsauce.creditcard.io.sale.Request request);
 
 
-    public void voidSale(com.hotsauce.creditcard.io.voidsale.Request request,@NonNull IDataReadCallBack<Response<com.hotsauce.creditcard.io.voidsale.Response>> callBack) {
-        runFunction(request,Action.VOID_SALE,callBack);
+    public Response<com.hotsauce.creditcard.io.voidsale.Response> voidSale(com.hotsauce.creditcard.io.voidsale.Request request) {
+        return runFunction(request,Action.VOID_SALE);
     }
     protected abstract ProviderResult<com.hotsauce.creditcard.io.voidsale.Response> implementVoidSale(com.hotsauce.creditcard.io.voidsale.Request request);
 
 
-    public void enterTips(com.hotsauce.creditcard.io.entertips.Request request,@NonNull IDataReadCallBack<Response<com.hotsauce.creditcard.io.entertips.Response>> callBack) {
-        runFunction(request,Action.ENTER_TIP,callBack);
+    public Response<com.hotsauce.creditcard.io.entertips.Response> enterTips(com.hotsauce.creditcard.io.entertips.Request request) {
+        return runFunction(request,Action.ENTER_TIP);
     }
     protected abstract ProviderResult<com.hotsauce.creditcard.io.entertips.Response> implementEnterTips(com.hotsauce.creditcard.io.entertips.Request request);
 
 
-    public void adjustTips(com.hotsauce.creditcard.io.adjusttips.Request request,@NonNull IDataReadCallBack<Response<com.hotsauce.creditcard.io.adjusttips.Response>> callBack) {
-        runFunction(request,Action.ADJUST_TIP,callBack);
+    public Response<com.hotsauce.creditcard.io.adjusttips.Response> adjustTips(com.hotsauce.creditcard.io.adjusttips.Request request) {
+        return runFunction(request,Action.ADJUST_TIP);
     }
     protected abstract ProviderResult<com.hotsauce.creditcard.io.adjusttips.Response> implementAdjustTips(com.hotsauce.creditcard.io.adjusttips.Request request);
 
 
-    public void batch(com.hotsauce.creditcard.io.batchsettlement.Request request,@NonNull IDataReadCallBack<Response<com.hotsauce.creditcard.io.batchsettlement.Response>> callBack) {
-        runFunction(request,Action.BATCH,callBack);
+    public Response<com.hotsauce.creditcard.io.batchsettlement.Response> batch(com.hotsauce.creditcard.io.batchsettlement.Request request) {
+        return runFunction(request,Action.BATCH);
     }
     protected abstract ProviderResult<com.hotsauce.creditcard.io.batchsettlement.Response> implementBatch(com.hotsauce.creditcard.io.batchsettlement.Request request);
 
