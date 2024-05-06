@@ -138,10 +138,6 @@ public class POSLink extends CreditCard<PosLinkManageData> {
     @Override
     protected ProviderResult<Response> implementAuth(Request request) {
         TransType transType = TransType.AUTH;
-        ProviderResult<Response> response = this.processManageData();
-        if(!response.getIsSuccess()) {
-            return response;
-        }
         //create Request
         PaymentRequest pay = new PaymentRequest();
         pay.TenderType = pay.ParseTenderType("CREDIT");
@@ -173,7 +169,7 @@ public class POSLink extends CreditCard<PosLinkManageData> {
         if(apiResponse.getIsSuccess()) {
             ExtData extData = null;
             try {
-                extData = TagConverter.DeserializeObject(ExtData.class, "", posLink.PaymentResponse.ExtData);
+                extData = TagConverter.DeserializeObject(ExtData.class, "", "<>" + apiResponse.getResponse().PaymentResponse.ExtData + "</>");
             }catch (Exception ignored) {}
             ExtData finalExtData = extData;
             result = new Response() {
@@ -183,17 +179,17 @@ public class POSLink extends CreditCard<PosLinkManageData> {
                 }
                 @Override
                 public CreditCardUtil.CardIssuers getCardIssuers() {
-                    assert finalExtData != null;
+                    if(finalExtData == null){return CreditCardUtil.CardIssuers.UNKNOWN;}
                     return CreditCardUtil.getCardIssuers(finalExtData.CARDBIN);
                 }
                 @Override
                 public String getCardNumber() {
-                    assert finalExtData != null;
+                    if(finalExtData == null){return "";}
                     return CreditCardUtil.getPartialCardNumber(finalExtData.CARDBIN,"","");
                 }
                 @Override
                 public String getExpDate() {
-                    assert finalExtData != null;
+                    if(finalExtData == null){return "";}
                     return finalExtData.ExpDate;
                 }
             };
@@ -254,7 +250,7 @@ public class POSLink extends CreditCard<PosLinkManageData> {
         if(apiResponse.getIsSuccess()) {
             ExtData extData = null;
             try {
-                extData = TagConverter.DeserializeObject(ExtData.class, "", posLink.PaymentResponse.ExtData);
+                extData = TagConverter.DeserializeObject(ExtData.class, "", "<>" + "<>" + apiResponse.getResponse().PaymentResponse.ExtData + "</>");
             }catch (Exception ignored) {}
             ExtData finalExtData = extData;
             result = new com.hotsauce.creditcard.io.sale.Response() {
@@ -421,7 +417,7 @@ public class POSLink extends CreditCard<PosLinkManageData> {
         }
     }
 
-    static class ExtData{
+    public static class ExtData{
         public String ExpDate;
         public String BatchNum;
         public String CARDBIN;

@@ -1,7 +1,6 @@
 package com.hotsauce.promise;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 public abstract class PromiseBase<T> {
     private final ExecutorService executor = Executors.newCachedThreadPool();
@@ -72,8 +71,13 @@ public abstract class PromiseBase<T> {
         return promise;
     }
 
-    public void execute() {
-        executor.submit(() -> runFunction(findRoot()));
+    public Future<T> execute() {
+        // Submit a Callable task to compute a result
+        Future<T> futureResult = executor.submit(() -> {
+            runFunction(findRoot());
+            return getResult(); // Assuming getResult() returns the type T
+        });
+        return futureResult;
     }
 
     private void runFunction(PromiseBase promise) {

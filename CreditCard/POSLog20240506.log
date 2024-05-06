@@ -1,0 +1,70 @@
+[2024-05-06 17:09:46.482]{}DEBUG:[AbstractPosLink.java-435 ] ProcessTrans [ 1 ] {} :ProcessTrans Start...
+[2024-05-06 17:09:46.504]{}DEBUG:[AbstractPosLink.java-463 ] ProcessTrans [ 1 ] {} :Timeout:
+[2024-05-06 17:09:46.506]{}DEBUG:[AbstractPosLink.java-466 ] ProcessTrans [ 1 ] {} :SDK VERSION:V1.13.00_20230606; Timeout:-1
+[2024-05-06 17:09:46.510]{}DEBUG:[TcpConnection.java-41 ] connect [ 1 ] {TCP} :ip:192.168.1.110 port:10009
+[2024-05-06 17:09:46.521]{}DEBUG:[TcpConnection.java-71 ] send [ 1 ] {TCP} :Send Message =[02]B00[1c]1.62[1c][1c][03]F
+[2024-05-06 17:09:46.643]{}DEBUG:[ProcessSocket.java-459 ] recvAck [ 1 ] {TCP} :Receive Message =[06]
+[2024-05-06 17:09:51.770]{}DEBUG:[ProcessSocket.java-547 ] SocketRecv [ 1 ] {TCP} :Receive Message =[02]0[1c]B01[1c]1.47[1c]000000[1c]OK[1c]00[1f]Success[1f][1f][1f][1f]56[1c]10=0=0=0=0=0=0[1c]3324=0=0=0=0=0=0[1c]20240506051106[1c][1c]887000001519[1c][1c][03]?
+[2024-05-06 17:09:51.772]{}DEBUG:[TcpConnection.java-71 ] send [ 1 ] {TCP} :Send Message =[06]
+[2024-05-06 17:09:51.929]{}DEBUG:[AbstractPosLink.java-991 ] unpackTrans [ 1 ] {TCP} :Batch_BATCHCLOSE_EDCType(NULL) Success!
+[2024-05-06 17:09:51.933]{}DEBUG:[AbstractPosLink.java-543 ] ProcessTrans [ 1 ] {} :ProcessTrans End...
+[2024-05-06 17:55:55.848]{}DEBUG:[AbstractPosLink.java-435 ] ProcessTrans [ 1 ] {} :ProcessTrans Start...
+[2024-05-06 17:55:55.868]{}DEBUG:[AbstractPosLink.java-463 ] ProcessTrans [ 1 ] {} :Timeout:
+[2024-05-06 17:55:55.870]{}DEBUG:[AbstractPosLink.java-466 ] ProcessTrans [ 1 ] {} :SDK VERSION:V1.13.00_20230606; Timeout:-1
+[2024-05-06 17:55:55.875]{}DEBUG:[TcpConnection.java-41 ] connect [ 1 ] {TCP} :ip:192.168.1.110 port:10009
+[2024-05-06 17:55:55.884]{}DEBUG:[TcpConnection.java-71 ] send [ 1 ] {TCP} :Send Message =[02]B00[1c]1.62[1c][1c][03]F
+[2024-05-06 17:55:56.016]{}DEBUG:[ProcessSocket.java-459 ] recvAck [ 1 ] {TCP} :Receive Message =[06]
+[2024-05-06 17:56:00.544]{}DEBUG:[ProcessSocket.java-547 ] SocketRecv [ 1 ] {TCP} :Receive Message =[02]0[1c]B01[1c]1.47[1c]000000[1c]OK[1c]00[1f]Success[1f][1f][1f][1f]57[1c]2=0=0=0=0=0=0[1c]150=0=0=0=0=0=0[1c]20240506055715[1c][1c]887000001519[1c][1c][03]?
+[2024-05-06 17:56:00.548]{}DEBUG:[TcpConnection.java-71 ] send [ 1 ] {TCP} :Send Message =[06]
+[2024-05-06 17:56:00.670]{}DEBUG:[AbstractPosLink.java-991 ] unpackTrans [ 1 ] {TCP} :Batch_BATCHCLOSE_EDCType(NULL) Success!
+[2024-05-06 17:56:00.672]{}DEBUG:[AbstractPosLink.java-543 ] ProcessTrans [ 1 ] {} :ProcessTrans End...
+[2024-05-06 17:58:04.623]{}DEBUG:[AbstractPosLink.java-435 ] ProcessTrans [ 1 ] {} :ProcessTrans Start...
+[2024-05-06 17:58:04.639]{}DEBUG:[AbstractPosLink.java-463 ] ProcessTrans [ 1 ] {} :Timeout:
+[2024-05-06 17:58:04.641]{}DEBUG:[AbstractPosLink.java-466 ] ProcessTrans [ 1 ] {} :SDK VERSION:V1.13.00_20230606; Timeout:-1
+[2024-05-06 17:58:04.647]{}DEBUG:[TcpConnection.java-41 ] connect [ 1 ] {TCP} :ip:192.168.1.110 port:10009
+[2024-05-06 17:58:04.659]{}DEBUG:[TcpConnection.java-71 ] send [ 1 ] {TCP} :Send Message =[02]B00[1c]1.62[1c][1c][03]F
+[2024-05-06 17:58:04.791]{}DEBUG:[ProcessSocket.java-459 ] recvAck [ 1 ] {TCP} :Receive Message =[06]
+[2024-05-06 17:58:05.437]{}DEBUG:[ProcessSocket.java-547 ] SocketRecv [ 1 ] {TCP} :Receive Message =[02]0[1c]B01[1c]1.47[1c]100023[1c]NOT FOUND[03]O
+[2024-05-06 17:58:05.439]{}DEBUG:[TcpConnection.java-71 ] send [ 1 ] {TCP} :Send Message =[06]
+[2024-05-06 17:58:05.571]{}ERROR:[AbstractPosLink.java-993 ] unpackTrans [ 1 ] {TCP} :Batch_BATCHCLOSE_EDCType(NULL) Fail!,ResultTxt =NOT FOUND
+[2024-05-06 17:58:05.574]{}DEBUG:[AbstractPosLink.java-543 ] ProcessTrans [ 1 ] {} :ProcessTrans End...
+[2024-05-06 18:32:26.874]{}DEBUG:[AbstractPosLink.java-435 ] ProcessTrans [ 1 ] {} :ProcessTrans Start...
+[2024-05-06 18:32:26.892]{}DEBUG:[AbstractPosLink.java-463 ] ProcessTrans [ 1 ] {} :Timeout:
+[2024-05-06 18:32:26.894]{}DEBUG:[AbstractPosLink.java-466 ] ProcessTrans [ 1 ] {} :SDK VERSION:V1.13.00_20230606; Timeout:-1
+[2024-05-06 18:32:26.898]{}DEBUG:[TcpConnection.java-41 ] connect [ 1 ] {TCP} :ip:192.168.1.110 port:10009
+[2024-05-06 18:32:26.908]{}DEBUG:[TcpConnection.java-71 ] send [ 1 ] {TCP} :Send Message =[02]B00[1c]1.62[1c][1c][03]F
+[2024-05-06 18:32:27.044]{}DEBUG:[ProcessSocket.java-459 ] recvAck [ 1 ] {TCP} :Receive Message =[06]
+[2024-05-06 18:32:30.748]{}DEBUG:[ProcessSocket.java-547 ] SocketRecv [ 1 ] {TCP} :Receive Message =[02]0[1c]B01[1c]1.47[1c]000000[1c]OK[1c]00[1f]Success[1f][1f][1f][1f]58[1c]2=0=0=0=0=0=0[1c]724=0=0=0=0=0=0[1c]20240506063345[1c][1c]887000001519[1c][1c][03]1
+[2024-05-06 18:32:30.750]{}DEBUG:[TcpConnection.java-71 ] send [ 1 ] {TCP} :Send Message =[06]
+[2024-05-06 18:32:30.878]{}DEBUG:[AbstractPosLink.java-991 ] unpackTrans [ 1 ] {TCP} :Batch_BATCHCLOSE_EDCType(NULL) Success!
+[2024-05-06 18:32:30.880]{}DEBUG:[AbstractPosLink.java-543 ] ProcessTrans [ 1 ] {} :ProcessTrans End...
+[2024-05-06 18:33:34.513]{}DEBUG:[AbstractPosLink.java-435 ] ProcessTrans [ 1 ] {} :ProcessTrans Start...
+[2024-05-06 18:33:34.534]{}DEBUG:[AbstractPosLink.java-463 ] ProcessTrans [ 1 ] {} :Timeout:
+[2024-05-06 18:33:34.536]{}DEBUG:[AbstractPosLink.java-466 ] ProcessTrans [ 1 ] {} :SDK VERSION:V1.13.00_20230606; Timeout:-1
+[2024-05-06 18:33:34.542]{}DEBUG:[TcpConnection.java-41 ] connect [ 1 ] {TCP} :ip:192.168.1.110 port:10009
+[2024-05-06 18:33:34.556]{}DEBUG:[TcpConnection.java-71 ] send [ 1 ] {TCP} :Send Message =[02]B00[1c]1.62[1c][1c][03]F
+[2024-05-06 18:33:34.701]{}DEBUG:[ProcessSocket.java-459 ] recvAck [ 1 ] {TCP} :Receive Message =[06]
+[2024-05-06 18:33:38.625]{}DEBUG:[ProcessSocket.java-547 ] SocketRecv [ 1 ] {TCP} :Receive Message =[02]0[1c]B01[1c]1.47[1c]000000[1c]OK[1c]00[1f]Success[1f][1f][1f][1f]59[1c]1=0=0=0=0=0=0[1c]100=0=0=0=0=0=0[1c]20240506063453[1c][1c]887000001519[1c][1c][03]3
+[2024-05-06 18:33:38.628]{}DEBUG:[TcpConnection.java-71 ] send [ 1 ] {TCP} :Send Message =[06]
+[2024-05-06 18:33:38.760]{}DEBUG:[AbstractPosLink.java-991 ] unpackTrans [ 1 ] {TCP} :Batch_BATCHCLOSE_EDCType(NULL) Success!
+[2024-05-06 18:33:38.762]{}DEBUG:[AbstractPosLink.java-543 ] ProcessTrans [ 1 ] {} :ProcessTrans End...
+[2024-05-06 18:34:26.136]{}DEBUG:[AbstractPosLink.java-435 ] ProcessTrans [ 1 ] {} :ProcessTrans Start...
+[2024-05-06 18:34:26.151]{}DEBUG:[AbstractPosLink.java-463 ] ProcessTrans [ 1 ] {} :Timeout:
+[2024-05-06 18:34:26.153]{}DEBUG:[AbstractPosLink.java-466 ] ProcessTrans [ 1 ] {} :SDK VERSION:V1.13.00_20230606; Timeout:-1
+[2024-05-06 18:34:26.156]{}DEBUG:[TcpConnection.java-41 ] connect [ 1 ] {TCP} :ip:192.168.1.110 port:10009
+[2024-05-06 18:34:26.167]{}DEBUG:[TcpConnection.java-71 ] send [ 1 ] {TCP} :Send Message =[02]B00[1c]1.62[1c][1c][03]F
+[2024-05-06 18:34:26.301]{}DEBUG:[ProcessSocket.java-459 ] recvAck [ 1 ] {TCP} :Receive Message =[06]
+[2024-05-06 18:34:30.240]{}DEBUG:[ProcessSocket.java-547 ] SocketRecv [ 1 ] {TCP} :Receive Message =[02]0[1c]B01[1c]1.47[1c]000000[1c]OK[1c]00[1f]Success[1f][1f][1f][1f]60[1c]1=0=0=0=0=0=0[1c]100=0=0=0=0=0=0[1c]20240506063545[1c][1c]887000001519[1c][1c][03]?
+[2024-05-06 18:34:30.248]{}DEBUG:[TcpConnection.java-71 ] send [ 1 ] {TCP} :Send Message =[06]
+[2024-05-06 18:34:30.360]{}DEBUG:[AbstractPosLink.java-991 ] unpackTrans [ 1 ] {TCP} :Batch_BATCHCLOSE_EDCType(NULL) Success!
+[2024-05-06 18:34:30.362]{}DEBUG:[AbstractPosLink.java-543 ] ProcessTrans [ 1 ] {} :ProcessTrans End...
+[2024-05-06 18:34:52.186]{}DEBUG:[AbstractPosLink.java-435 ] ProcessTrans [ 1 ] {} :ProcessTrans Start...
+[2024-05-06 18:34:52.205]{}DEBUG:[AbstractPosLink.java-463 ] ProcessTrans [ 1 ] {} :Timeout:
+[2024-05-06 18:34:52.207]{}DEBUG:[AbstractPosLink.java-466 ] ProcessTrans [ 1 ] {} :SDK VERSION:V1.13.00_20230606; Timeout:-1
+[2024-05-06 18:34:52.213]{}DEBUG:[TcpConnection.java-41 ] connect [ 1 ] {TCP} :ip:192.168.1.110 port:10009
+[2024-05-06 18:34:52.225]{}DEBUG:[TcpConnection.java-71 ] send [ 1 ] {TCP} :Send Message =[02]B00[1c]1.62[1c][1c][03]F
+[2024-05-06 18:34:52.359]{}DEBUG:[ProcessSocket.java-459 ] recvAck [ 1 ] {TCP} :Receive Message =[06]
+[2024-05-06 18:34:56.066]{}DEBUG:[ProcessSocket.java-547 ] SocketRecv [ 1 ] {TCP} :Receive Message =[02]0[1c]B01[1c]1.47[1c]000000[1c]OK[1c]00[1f]Success[1f][1f][1f][1f]61[1c]1=0=0=0=0=0=0[1c]103=0=0=0=0=0=0[1c]20240506063610[1c][1c]887000001519[1c][1c][03]>
+[2024-05-06 18:34:56.068]{}DEBUG:[TcpConnection.java-71 ] send [ 1 ] {TCP} :Send Message =[06]
+[2024-05-06 18:34:56.199]{}DEBUG:[AbstractPosLink.java-991 ] unpackTrans [ 1 ] {TCP} :Batch_BATCHCLOSE_EDCType(NULL) Success!
+[2024-05-06 18:34:56.201]{}DEBUG:[AbstractPosLink.java-543 ] ProcessTrans [ 1 ] {} :ProcessTrans End...
