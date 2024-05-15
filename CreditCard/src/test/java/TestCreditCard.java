@@ -7,6 +7,7 @@ import com.hotsauce.creditcard.io.base.Response;
 import com.hotsauce.creditcard.io.manage.PosLinkManageData;
 import com.hotsauce.creditcard.providers.CreditCardFactory;
 import com.hotsauce.creditcard.providers.ProviderType;
+import com.hotsauce.creditcard.util.creditcard.CreditCardUtil;
 import com.hotsauce.promise.Promise;
 import com.hotsauce.promise.PromiseReceived;
 import org.junit.Test;
@@ -56,13 +57,21 @@ public class TestCreditCard {
         creditCard.batch(request);
     }
 
+    @Test
+    public void testTokenizeAndSale() {
+        createPromise()
+                .promiseThen(createTokenizePromiseThen())
+                .promiseThen(createSaleTokenPromiseThen())
+                .promiseThen(createFinalPromiseThen("Sale With Token"));
+    }
 
+    private final boolean showEnterTips = false;
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddhhmmss");
     private final ProviderType providerType = ProviderType.POSLink;
     private final DeviceInfo deviceInfo = DeviceInfo.builder()
             .ip("192.168.1.110")
             .port(DeviceInfo.getDeviceDefaultPort(providerType))
-            .timeOut(10000)
+            .timeOut(60000)
             .retryTime(0)
             .build();
     private final PosLinkManageData posLinkManageData = new PosLinkManageData("TA5714099","Hotsauce987!","887000001519","88700000151901");
@@ -100,7 +109,12 @@ public class TestCreditCard {
     }
     public Response<com.hotsauce.creditcard.io.sale.Response> testSale() {
         CreditCard<?> creditCard = generateCreditCard();
-        com.hotsauce.creditcard.io.sale.Request request = new com.hotsauce.creditcard.io.sale.Request(getTransactionID(),BigDecimal.ONE,BigDecimal.ZERO,BigDecimal.ONE,BigDecimal.ZERO);
+        com.hotsauce.creditcard.io.sale.Request request = new com.hotsauce.creditcard.io.sale.Request(getTransactionID(),BigDecimal.ONE,BigDecimal.ZERO,BigDecimal.ONE,BigDecimal.ZERO,showEnterTips);
+        return creditCard.sale(request);
+    }
+    public Response<com.hotsauce.creditcard.io.sale.Response> testSaleWithToken(String refNumber, String token, String expDate, CreditCardUtil.CardIssuers cardIssuers) {
+        CreditCard<?> creditCard = generateCreditCard();
+        com.hotsauce.creditcard.io.sale.RequestToken request = new com.hotsauce.creditcard.io.sale.RequestToken(getTransactionID(),BigDecimal.ONE,BigDecimal.ZERO,BigDecimal.ONE,BigDecimal.ZERO,showEnterTips,refNumber,token,expDate,cardIssuers);
         return creditCard.sale(request);
     }
     public Response<com.hotsauce.creditcard.io.voidsale.Response> testVoid(String refNumber) {
@@ -117,6 +131,11 @@ public class TestCreditCard {
         CreditCard<?> creditCard = generateCreditCard();
         com.hotsauce.creditcard.io.adjusttips.Request request = new com.hotsauce.creditcard.io.adjusttips.Request(getTransactionID(),BigDecimal.ONE,refNumber);
         return creditCard.adjustTips(request);
+    }
+    public Response<com.hotsauce.creditcard.io.tokenize.Response> testTokenize() {
+        CreditCard<?> creditCard = generateCreditCard();
+        com.hotsauce.creditcard.io.tokenize.Request request = new com.hotsauce.creditcard.io.tokenize.Request(getTransactionID());
+        return creditCard.tokenize(request);
     }
     //endregion
 
@@ -257,6 +276,41 @@ public class TestCreditCard {
             @Override
             protected void onPromiseRejected(Response<T> response) {
                 System.out.println(lastAction + " Fail : " + response.getResultMessage());
+            }
+        };
+    }
+    private <T> PromiseReceived<T,Response<com.hotsauce.creditcard.io.tokenize.Response>> createTokenizePromiseThen() {
+        return new PromiseReceived<>() {
+            @Override
+            protected void onPromiseResolved(T t) {
+                System.out.println("Start Tokenize");
+                Response<com.hotsauce.creditcard.io.tokenize.Response> response1 = testTokenize();
+                if(Objects.equals(response1.getResultCode(), ResultCode.SUCCESS.getCode())) {
+                    resolve(response1);
+                }else {
+                    reject(response1);
+                }
+            }
+            @Override
+            protected void onPromiseRejected(T t) {}
+        };
+    }
+    private PromiseReceived<Response<com.hotsauce.creditcard.io.tokenize.Response>,Response<com.hotsauce.creditcard.io.sale.Response>> createSaleTokenPromiseThen() {
+        return new PromiseReceived<>() {
+            @Override
+            protected void onPromiseResolved(Response<com.hotsauce.creditcard.io.tokenize.Response> response) {
+                System.out.println("Start Sale");
+                Response<com.hotsauce.creditcard.io.sale.Response> response1 = testSaleWithToken(response.getData().getRefNumber(),response.getData().getToken(),response.getData().getExpDate(),response.getData().getCardIssuer());
+                if(Objects.equals(response1.getResultCode(), ResultCode.SUCCESS.getCode())) {
+                    resolve(response1);
+                }else {
+                    reject(response1);
+                }
+            }
+
+            @Override
+            protected void onPromiseRejected(Response<com.hotsauce.creditcard.io.tokenize.Response> response) {
+                System.out.println("Get Token" + " Fail : " + response.getResultMessage());
             }
         };
     }

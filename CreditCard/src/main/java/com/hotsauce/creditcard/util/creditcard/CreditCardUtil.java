@@ -7,7 +7,9 @@ public class CreditCardUtil {
         MASTER,
         VISA,
         JCB,
+        DINER_CLUB,
         AMERICAN_EXPRESS,
+        DISCOVER,
         CHINA_UNION_PAY
     }
     public static CardIssuers getCardIssuers(String bin) {

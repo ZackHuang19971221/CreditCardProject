@@ -5,6 +5,7 @@ import com.hotsauce.creditcard.io.DeviceInfo;
 import com.hotsauce.creditcard.io.auth.Request;
 import com.hotsauce.creditcard.io.auth.Response;
 import com.hotsauce.creditcard.io.manage.PosLinkManageData;
+import com.hotsauce.creditcard.io.sale.RequestToken;
 import com.hotsauce.creditcard.util.converter.TagConverter;
 import com.hotsauce.creditcard.util.creditcard.CreditCardUtil;
 import com.pax.poslink.*;
@@ -240,17 +241,26 @@ public class POSLink extends CreditCard<PosLinkManageData> {
         pay.TenderType = pay.ParseTenderType("CREDIT");
         pay.TransType = pay.ParseTransType(transType.getCode());
         pay.Amount = convertBigDecimalValue(request.getAmount());
-        pay.TipAmt = convertBigDecimalValue(request.getTip());
         pay.TaxAmt = convertBigDecimalValue(request.getTax());
         pay.ECRRefNum = request.getRequestId();
         pay.ECRTransID = request.getRequestId();
         pay.ServiceFee = convertBigDecimalValue(request.getServiceFee());
+        pay.ExtData = "";
+        if(request.getShowEnterTips()) {
+            pay.ExtData += "<TipRequest>1</TipRequest>";
+        }else {
+            pay.TipAmt = convertBigDecimalValue(request.getTip());
+        }
+        if(request instanceof RequestToken) {
+            pay.ExtData += "<Token>" + ((RequestToken) request).getToken() + "</Token>";
+            pay.ExtData += "<ExpDate>" + ((RequestToken) request).getExpDate() + "</ExpDate>";
+        }
         APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,transType.getCode());
         com.hotsauce.creditcard.io.sale.Response result = null;
         if(apiResponse.getIsSuccess()) {
             ExtData extData = null;
             try {
-                extData = TagConverter.DeserializeObject(ExtData.class, "", "<>" + "<>" + apiResponse.getResponse().PaymentResponse.ExtData + "</>");
+                extData = TagConverter.DeserializeObject(ExtData.class, "", "<>" + apiResponse.getResponse().PaymentResponse.ExtData + "</>");
             }catch (Exception ignored) {}
             ExtData finalExtData = extData;
             result = new com.hotsauce.creditcard.io.sale.Response() {
@@ -327,6 +337,48 @@ public class POSLink extends CreditCard<PosLinkManageData> {
         }
         return new ProviderResult<>(apiResponse.getIsSuccess(),apiResponse.getProviderMessage(),result);
     }
+
+    @Override
+    protected ProviderResult<com.hotsauce.creditcard.io.tokenize.Response> implementTokenize(com.hotsauce.creditcard.io.tokenize.Request request) {
+        TransType transType = TransType.TOKENIZE;
+        PaymentRequest pay = new PaymentRequest();
+        pay.TenderType = pay.ParseTenderType("CREDIT");
+        pay.TransType = pay.ParseTransType(transType.getCode());
+        pay.ECRRefNum = request.getRequestId();
+        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,transType.getCode());
+        com.hotsauce.creditcard.io.tokenize.Response result = null;
+        if(apiResponse.getIsSuccess()) {
+            ExtData extData = null;
+            try {
+                extData = TagConverter.DeserializeObject(ExtData.class, "", "<>" + apiResponse.getResponse().PaymentResponse.ExtData + "</>");
+            }catch (Exception ignored) {}
+            ExtData finalExtData = extData;
+            result = new com.hotsauce.creditcard.io.tokenize.Response() {
+                @Override
+                public String getToken() {
+                    assert finalExtData != null;
+                    return finalExtData.Token;
+                }
+
+                @Override
+                public String getExpDate() {
+                    assert finalExtData != null;
+                    return finalExtData.ExpDate;
+                }
+
+                @Override
+                public CreditCardUtil.CardIssuers getCardIssuer() {
+                    if(finalExtData == null){return CreditCardUtil.CardIssuers.UNKNOWN;}
+                    return CreditCardUtil.getCardIssuers(finalExtData.CARDBIN);
+                }
+
+                @Override
+                public String getRefNumber() {return apiResponse.getResponse().PaymentResponse.RefNum;}
+            };
+        }
+        return new ProviderResult<>(apiResponse.getIsSuccess(),apiResponse.getProviderMessage(),result);
+    }
+
 
     @Override
     protected ProviderResult<com.hotsauce.creditcard.io.batchsettlement.Response> implementBatch(com.hotsauce.creditcard.io.batchsettlement.Request request) {
@@ -407,7 +459,8 @@ public class POSLink extends CreditCard<PosLinkManageData> {
         ADJUST("ADJUST"),
         RETURN("RETURN"),
         VOID_AUTH("VOID AUTH"),
-        BATCH_CLOSE("BATCHCLOSE");
+        BATCH_CLOSE("BATCHCLOSE"),
+        TOKENIZE("TOKENIZE");
         private final String code;
         TransType(String code) {
             this.code = code;
@@ -420,6 +473,7 @@ public class POSLink extends CreditCard<PosLinkManageData> {
     public static class ExtData{
         public String ExpDate;
         public String BatchNum;
+        public String Token;
         public String CARDBIN;
     }
 }

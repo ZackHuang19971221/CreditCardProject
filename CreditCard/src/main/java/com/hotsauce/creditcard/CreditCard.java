@@ -56,6 +56,9 @@ public abstract class CreditCard<M> {
                 case ADJUST_TIP:
                     providerResult = (ProviderResult<ResT>) implementAdjustTips((com.hotsauce.creditcard.io.adjusttips.Request) request);
                     break;
+                case TOKENIZE:
+                    providerResult = (ProviderResult<ResT>) implementTokenize((com.hotsauce.creditcard.io.tokenize.Request) request);
+                    break;
                 case BATCH:
                     providerResult = (ProviderResult<ResT>) implementBatch((com.hotsauce.creditcard.io.batchsettlement.Request) request);
                     break;
@@ -255,12 +258,20 @@ public abstract class CreditCard<M> {
     protected abstract ProviderResult<com.hotsauce.creditcard.io.adjusttips.Response> implementAdjustTips(com.hotsauce.creditcard.io.adjusttips.Request request);
 
 
+    public Response<com.hotsauce.creditcard.io.tokenize.Response> tokenize(com.hotsauce.creditcard.io.tokenize.Request request) {
+        return runFunction(request,Action.TOKENIZE);
+    }
+    protected abstract ProviderResult<com.hotsauce.creditcard.io.tokenize.Response> implementTokenize(com.hotsauce.creditcard.io.tokenize.Request request);
+
+
     public Response<com.hotsauce.creditcard.io.batchsettlement.Response> batch(com.hotsauce.creditcard.io.batchsettlement.Request request) {
         return runFunction(request,Action.BATCH);
     }
     protected abstract ProviderResult<com.hotsauce.creditcard.io.batchsettlement.Response> implementBatch(com.hotsauce.creditcard.io.batchsettlement.Request request);
 
+
     protected abstract void implementCancel();
+
     //endregion
 
 
@@ -272,7 +283,8 @@ public abstract class CreditCard<M> {
         VOID_SALE,
         ENTER_TIP,
         ADJUST_TIP,
-        BATCH
+        BATCH,
+        TOKENIZE
     }
 
     protected static class ProviderResult<T> {
