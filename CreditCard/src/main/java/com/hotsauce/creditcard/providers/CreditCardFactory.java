@@ -12,8 +12,8 @@ public class CreditCardFactory {
             case Developer:
                 //instance = new com.hotsauce.creditcard.providers.Developer();
                 break;
-            case SPIN :
-                //instance = new com.hotsauce.creditcard.providers.SPIN();
+            case Dejavoo:
+                instance = new com.hotsauce.creditcard.providers.Dejavoo(deviceInfo);
                 break;
             case POSLink:
                 instance = new com.hotsauce.creditcard.providers.POSLink(deviceInfo);

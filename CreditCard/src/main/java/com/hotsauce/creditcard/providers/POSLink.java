@@ -43,7 +43,7 @@ public class POSLink extends CreditCard<PosLinkManageData> {
     @SuppressWarnings("unchecked")
     @SneakyThrows
     @Override
-    protected <T1, T2 extends APIResponse<T4, T3>, T3, T4> T2 implementCallApi(T1 request) {
+    protected <T1, T2 extends APIResponse<T4, T3>, T3, T4> T2 implementCallApi(T1 request,Class<T3> responseType) {
         if(request instanceof PaymentRequest) {
             posLink.PaymentRequest = (PaymentRequest) request;
         }
@@ -165,7 +165,7 @@ public class POSLink extends CreditCard<PosLinkManageData> {
         pay.GiftTenderType = "";
         pay.OrigTraceNum = "";
         pay.ExtData = "";
-        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,transType.getCode());
+        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,com.pax.poslink.PosLink.class,transType.getCode());
         Response result = null;
         if(apiResponse.getIsSuccess()) {
             ExtData extData = null;
@@ -206,7 +206,7 @@ public class POSLink extends CreditCard<PosLinkManageData> {
         pay.TransType = pay.ParseTransType(transType.getCode());
         pay.ECRRefNum = request.getRequestId();
         pay.OrigRefNum = request.getRefNumber();
-        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,transType.getCode());
+        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,com.pax.poslink.PosLink.class,transType.getCode());
         com.hotsauce.creditcard.io.voidauth.Response result = null;
         if(apiResponse.getIsSuccess()) {
             result = new com.hotsauce.creditcard.io.voidauth.Response() {};
@@ -226,7 +226,7 @@ public class POSLink extends CreditCard<PosLinkManageData> {
         pay.ECRRefNum = request.getRequestId();
         pay.OrigRefNum = request.getRefNumber();
         pay.ServiceFee = convertBigDecimalValue(request.getServiceFee());
-        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,transType.getCode());
+        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,com.pax.poslink.PosLink.class,transType.getCode());
         com.hotsauce.creditcard.io.capture.Response result = null;
         if(apiResponse.getIsSuccess()) {
             result = () -> apiResponse.getResponse().PaymentResponse.RefNum;
@@ -255,7 +255,7 @@ public class POSLink extends CreditCard<PosLinkManageData> {
             pay.ExtData += "<Token>" + ((RequestToken) request).getToken() + "</Token>";
             pay.ExtData += "<ExpDate>" + ((RequestToken) request).getExpDate() + "</ExpDate>";
         }
-        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,transType.getCode());
+        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,com.pax.poslink.PosLink.class,transType.getCode());
         com.hotsauce.creditcard.io.sale.Response result = null;
         if(apiResponse.getIsSuccess()) {
             ExtData extData = null;
@@ -296,7 +296,7 @@ public class POSLink extends CreditCard<PosLinkManageData> {
         pay.TransType = pay.ParseTransType(transType.getCode());
         pay.ECRRefNum = request.getRequestId();
         pay.OrigRefNum = request.getRefNumber();
-        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,transType.getCode());
+        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,com.pax.poslink.PosLink.class,transType.getCode());
         com.hotsauce.creditcard.io.voidsale.Response result = null;
         if(apiResponse.getIsSuccess()) {
             result = new com.hotsauce.creditcard.io.voidsale.Response() {};
@@ -313,7 +313,7 @@ public class POSLink extends CreditCard<PosLinkManageData> {
         pay.Amount = convertBigDecimalValue(request.getTip());
         pay.ECRRefNum = request.getRequestId();
         pay.OrigRefNum = request.getRefNumber();
-        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,transType.getCode());
+        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,com.pax.poslink.PosLink.class,transType.getCode());
         com.hotsauce.creditcard.io.entertips.Response result = null;
         if(apiResponse.getIsSuccess()) {
             result = () -> apiResponse.getResponse().PaymentResponse.RefNum;
@@ -330,7 +330,7 @@ public class POSLink extends CreditCard<PosLinkManageData> {
         pay.Amount = convertBigDecimalValue(request.getTip());
         pay.ECRRefNum = request.getRequestId();
         pay.OrigRefNum = request.getRefNumber();
-        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,transType.getCode());
+        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,com.pax.poslink.PosLink.class,transType.getCode());
         com.hotsauce.creditcard.io.adjusttips.Response result = null;
         if(apiResponse.getIsSuccess()) {
             result = () -> apiResponse.getResponse().PaymentResponse.RefNum;
@@ -345,7 +345,7 @@ public class POSLink extends CreditCard<PosLinkManageData> {
         pay.TenderType = pay.ParseTenderType("CREDIT");
         pay.TransType = pay.ParseTransType(transType.getCode());
         pay.ECRRefNum = request.getRequestId();
-        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,transType.getCode());
+        APIResponse<PaymentRequest,com.pax.poslink.PosLink> apiResponse = callApi(pay,com.pax.poslink.PosLink.class,transType.getCode());
         com.hotsauce.creditcard.io.tokenize.Response result = null;
         if(apiResponse.getIsSuccess()) {
             ExtData extData = null;
@@ -385,7 +385,7 @@ public class POSLink extends CreditCard<PosLinkManageData> {
         TransType transType = TransType.BATCH_CLOSE;
         BatchRequest batchRequest = new BatchRequest();
         batchRequest.TransType = batchRequest.ParseTransType(transType.getCode());
-        APIResponse<BatchRequest,com.pax.poslink.PosLink> apiResponse = callApi(batchRequest,transType.getCode());
+        APIResponse<BatchRequest,com.pax.poslink.PosLink> apiResponse = callApi(batchRequest,com.pax.poslink.PosLink.class,transType.getCode());
         com.hotsauce.creditcard.io.batchsettlement.Response result = null;
         if(apiResponse.getIsSuccess()) {
             result = new com.hotsauce.creditcard.io.batchsettlement.Response() {};
@@ -401,7 +401,7 @@ public class POSLink extends CreditCard<PosLinkManageData> {
 
     //region "Manage Request"
     private <T> ProviderResult<T> processManageData() {
-        APIResponse<ManageRequest,com.pax.poslink.PosLink> apiResponse = callApi(getManageRequest(),"MANAGEMENT");
+        APIResponse<ManageRequest,com.pax.poslink.PosLink> apiResponse = callApi(getManageRequest(),com.pax.poslink.PosLink.class,"MANAGEMENT");
         return new ProviderResult<>(apiResponse.getIsSuccess(), apiResponse.getProviderMessage(),null);
     }
     private ManageRequest manageRequest;

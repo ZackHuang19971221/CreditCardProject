@@ -154,12 +154,12 @@ public abstract class CreditCard<M> {
 
     //region "Call API"
     @SneakyThrows
-    protected <Req, Res extends APIResponse<Req1, Res1>, Res1, Req1> Res callApi(Req request, String action) {
+    protected <Req, Res extends APIResponse<Req1, Res1>, Res1, Req1> Res callApi(Req request, Class<Res1> responseType , String action) {
         Res response = null;
         try {
             while (true) {
                 try {
-                  response = implementCallApi(request);
+                  response = implementCallApi(request,responseType);
                   return response;
                 }catch (Exception exception) {
                     if(!(exception instanceof TimeoutException)) {throw exception;}
@@ -187,7 +187,7 @@ public abstract class CreditCard<M> {
         }
     }
 
-    protected abstract <T1,T2 extends APIResponse<T4,T3>,T3,T4> T2 implementCallApi(T1 request);
+    protected abstract <T1,T2 extends APIResponse<T4,T3>,T3,T4> T2 implementCallApi(T1 request,Class<T3> responseType);
     //endregion
 
 

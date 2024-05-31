@@ -4,7 +4,9 @@ import com.hotsauce.creditcard.providers.ProviderType;
 import lombok.Builder;
 import lombok.Data;
 
+import java.net.UnknownHostException;
 import java.util.regex.Pattern;
+import java.net.InetAddress;
 
 @Data
 @Builder
@@ -24,6 +26,12 @@ public class DeviceInfo {
         setTimeOut(timeout);
         setRetryTime(Math.max(retryTime,0));
     }
+    public DeviceInfo(String url,int timeout, int retryTime) throws UnknownHostException {
+        setIp(InetAddress.getByName(url).getHostAddress());
+        setTimeOut(timeout);
+        setRetryTime(Math.max(retryTime,0));
+    }
+
     private String ip;
     private int port;
     private int timeOut;
@@ -51,7 +59,7 @@ public class DeviceInfo {
         switch (type){
             case Developer:
                 return 8080;
-            case SPIN :
+            case Dejavoo:
                 return 1;
             case POSLink:
                 return 10009;

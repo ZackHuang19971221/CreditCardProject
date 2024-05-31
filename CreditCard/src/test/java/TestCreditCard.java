@@ -4,6 +4,7 @@ import com.hotsauce.creditcard.io.IReferNumber;
 import com.hotsauce.creditcard.io.ResultCode;
 import com.hotsauce.creditcard.io.auth.Request;
 import com.hotsauce.creditcard.io.base.Response;
+import com.hotsauce.creditcard.io.manage.DejavooManageData;
 import com.hotsauce.creditcard.io.manage.PosLinkManageData;
 import com.hotsauce.creditcard.providers.CreditCardFactory;
 import com.hotsauce.creditcard.providers.ProviderType;
@@ -67,7 +68,7 @@ public class TestCreditCard {
 
     private final boolean showEnterTips = false;
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddhhmmss");
-    private final ProviderType providerType = ProviderType.POSLink;
+    private final ProviderType providerType = ProviderType.Dejavoo;
     private final DeviceInfo deviceInfo = DeviceInfo.builder()
             .ip("192.168.1.110")
             .port(DeviceInfo.getDeviceDefaultPort(providerType))
@@ -75,12 +76,16 @@ public class TestCreditCard {
             .retryTime(0)
             .build();
     private final PosLinkManageData posLinkManageData = new PosLinkManageData("TA5714099","Hotsauce987!","887000001519","88700000151901");
+    private final DejavooManageData dejavooManageData = new DejavooManageData("X9rH3Z9WKk","103315001");
 
     private CreditCard<?> generateCreditCard() {
         CreditCard<?> creditCard = CreditCardFactory.createInstance(providerType,deviceInfo);
         switch (providerType) {
             case POSLink:
                 ((CreditCard<PosLinkManageData>) creditCard).setManagementData(posLinkManageData);
+                break;
+            case Dejavoo:
+                ((CreditCard<DejavooManageData>) creditCard).setManagementData(dejavooManageData);
                 break;
         }
         return creditCard;
