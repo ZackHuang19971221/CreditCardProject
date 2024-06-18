@@ -5,19 +5,19 @@ import java.util.concurrent.*;
 public abstract class PromiseBase<T> {
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
-    private PromiseBase child;
-    protected void setChild(PromiseBase child) {
+    private PromiseBase<?> child;
+    protected void setChild(PromiseBase<?> child) {
         this.child = child;
     }
-    protected PromiseBase getChild() {
+    protected PromiseBase<?> getChild() {
         return child;
     }
 
-    private PromiseBase parent;
-    protected void setParent(PromiseBase parent) {
+    private PromiseBase<?> parent;
+    protected void setParent(PromiseBase<?> parent) {
         this.parent = parent;
     }
-    protected PromiseBase getParent() {
+    protected PromiseBase<?> getParent() {
         return parent;
     }
 
@@ -73,14 +73,13 @@ public abstract class PromiseBase<T> {
 
     public Future<T> execute() {
         // Submit a Callable task to compute a result
-        Future<T> futureResult = executor.submit(() -> {
+        return executor.submit(() -> {
             runFunction(findRoot());
             return getResult(); // Assuming getResult() returns the type T
         });
-        return futureResult;
     }
 
-    private void runFunction(PromiseBase promise) {
+    private void runFunction(PromiseBase<?> promise) {
         if(promise == null){return;}
 
         if(promise.getStatus() == Status.PENDING) {
@@ -96,7 +95,11 @@ public abstract class PromiseBase<T> {
                 promise.onException(e);
             }
         }
-
+        while (promise.getStatus() == Status.PENDING) {
+            if(promise.getStatus() != Status.PENDING) {
+                break;
+            }
+        }
         if(promise.getStatus() == Status.FULFILLED && promise.getChild() != null) {
             runFunction(promise.getChild());
         }else {
@@ -104,7 +107,7 @@ public abstract class PromiseBase<T> {
         }
     }
 
-    private void runOnFinally(PromiseBase promise) {
+    private void runOnFinally(PromiseBase<?> promise) {
         if (promise == null) {
             return;
         }
@@ -112,16 +115,16 @@ public abstract class PromiseBase<T> {
         runOnFinally(promise.getParent());
     }
 
-    private PromiseBase findRoot() {
-        PromiseBase last = this;
+    private PromiseBase<?> findRoot() {
+        PromiseBase<?> last = this;
         while (last.getParent() != null && last.getStatus() == Status.PENDING) {
             last = last.getParent();
         }
         return last;
     }
 
-    private PromiseBase findLastChild() {
-        PromiseBase last = findRoot();
+    private PromiseBase<?> findLastChild() {
+        PromiseBase<?> last = findRoot();
         while (last.getChild() != null && last.getChild().getStatus() != Status.PENDING) {
             last = last.getChild();
         }

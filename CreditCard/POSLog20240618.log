@@ -1,0 +1,30 @@
+[2024-06-18 13:47:04.995]{}DEBUG:[AbstractPosLink.java-435 ] ProcessTrans [ 1 ] {} :ProcessTrans Start...
+[2024-06-18 13:47:05.011]{}DEBUG:[AbstractPosLink.java-463 ] ProcessTrans [ 1 ] {} :Timeout:
+[2024-06-18 13:47:05.012]{}DEBUG:[AbstractPosLink.java-466 ] ProcessTrans [ 1 ] {} :SDK VERSION:V1.13.00_20230606; Timeout:-1
+[2024-06-18 13:47:05.018]{}DEBUG:[TcpConnection.java-41 ] connect [ 1 ] {TCP} :ip:192.168.1.110 port:10009
+[2024-06-18 13:47:05.024]{}DEBUG:[TcpConnection.java-71 ] send [ 1 ] {TCP} :Send Message =[02]T00[1c]1.62[1c]01[1c]100[1f]0[1f][1f][1f]100[1f][1f]0[1c][1c]20240618014704[1f][1f][1f][1f][1f]20240618014704[1c][1c][1c][1f][1f][1f][1f][1f][1f][1f][1f][1f][1f][1f][1f][1f][1f][1f][1f][1f][1f][1c][1c][1c][1c]0[1c][1c][1c][03]~
+[2024-06-18 13:47:05.184]{}DEBUG:[ProcessSocket.java-459 ] recvAck [ 1 ] {TCP} :Receive Message =[06]
+[2024-06-18 13:47:20.687]{}DEBUG:[ProcessSocket.java-547 ] SocketRecv [ 1 ] {TCP} :Receive Message =[02]0[1c]T01[1c]1.47[1c]000000[1c]OK[1c]00[1f]Success[1f]VTLMC1[1f]417005501304[1f][1f]77[1f]1212MCC111582**[1f]45499365[1f][1c]01[1c]100[1f]0[1f]0[1f]0[1f]0[1f]0[1f][1f][1c]1800[1f]2[1f]0726[1f][1f][1f][1f]02[1f][1f][1f][1f]0[1f][1f][1f][1f][1c]1[1f]20240618014704[1f]20240618014847[1f][1f][1f][1f][1f][1c][1f][1f][1f][1f][1c][1c][1c]EDCTYPE=CREDIT[1f]HRef=45499365[1f]SN=53509228[1f]GLOBALUID=53509228202406180148473027[1f]CARDBIN=515721[1f]PROGRAMTYPE=1[1f]ARQC=536A2BF094FBFD6D[1f]TVR=0000008001[1f]AID=A0000000041010[1f]TSI=0000[1f]ATC=01E1[1f]APPLAB=MASTERCARD[1f]IAD=0114A14003040000000400000000000000FF[1f]CVM=7[1c][1c][1c][1c][03]E
+[2024-06-18 13:47:20.691]{}DEBUG:[TcpConnection.java-71 ] send [ 1 ] {TCP} :Send Message =[06]
+[2024-06-18 13:47:20.811]{}DEBUG:[AbstractPosLink.java-903 ] unpackTrans [ 1 ] {TCP} :Payment_CREDIT_SALE Success!
+[2024-06-18 13:47:20.813]{}DEBUG:[AbstractPosLink.java-543 ] ProcessTrans [ 1 ] {} :ProcessTrans End...
+[2024-06-18 13:47:20.852]{}DEBUG:[AbstractPosLink.java-435 ] ProcessTrans [ 1 ] {} :ProcessTrans Start...
+[2024-06-18 13:47:20.854]{}DEBUG:[AbstractPosLink.java-463 ] ProcessTrans [ 1 ] {} :Timeout:
+[2024-06-18 13:47:20.855]{}DEBUG:[AbstractPosLink.java-466 ] ProcessTrans [ 1 ] {} :SDK VERSION:V1.13.00_20230606; Timeout:-1
+[2024-06-18 13:47:20.856]{}DEBUG:[TcpConnection.java-41 ] connect [ 1 ] {TCP} :ip:192.168.1.110 port:10009
+[2024-06-18 13:47:20.860]{}DEBUG:[TcpConnection.java-71 ] send [ 1 ] {TCP} :Send Message =[02]B00[1c]1.62[1c][1c][03]F
+[2024-06-18 13:47:22.931]{}DEBUG:[ProcessSocket.java-459 ] recvAck [ 1 ] {TCP} :Receive Message =[06]
+[2024-06-18 13:47:26.427]{}DEBUG:[ProcessSocket.java-547 ] SocketRecv [ 1 ] {TCP} :Receive Message =[02]0[1c]B01[1c]1.47[1c]000000[1c]OK[1c]00[1f]Success[1f][1f][1f][1f]77[1c]1=0=0=0=0=0=0[1c]100=0=0=0=0=0=0[1c]20240618014857[1c][1c]887000001519[1c][1c][03];
+[2024-06-18 13:47:26.432]{}DEBUG:[TcpConnection.java-71 ] send [ 1 ] {TCP} :Send Message =[06]
+[2024-06-18 13:47:26.495]{}DEBUG:[AbstractPosLink.java-991 ] unpackTrans [ 1 ] {TCP} :Batch_BATCHCLOSE_EDCType(NULL) Success!
+[2024-06-18 13:47:26.499]{}DEBUG:[AbstractPosLink.java-543 ] ProcessTrans [ 1 ] {} :ProcessTrans End...
+[2024-06-18 13:47:26.666]{}DEBUG:[AbstractPosLink.java-435 ] ProcessTrans [ 1 ] {} :ProcessTrans Start...
+[2024-06-18 13:47:26.667]{}DEBUG:[AbstractPosLink.java-463 ] ProcessTrans [ 1 ] {} :Timeout:
+[2024-06-18 13:47:26.668]{}DEBUG:[AbstractPosLink.java-466 ] ProcessTrans [ 1 ] {} :SDK VERSION:V1.13.00_20230606; Timeout:-1
+[2024-06-18 13:47:26.669]{}DEBUG:[TcpConnection.java-41 ] connect [ 1 ] {TCP} :ip:192.168.1.110 port:10009
+[2024-06-18 13:47:26.675]{}DEBUG:[TcpConnection.java-71 ] send [ 1 ] {TCP} :Send Message =[02]T00[1c]1.62[1c]02[1c][1c][1c]20240618014726[1f][1f][1f]1[1c][1c][1c][1f][1f][1f][1f][1f][1f][1f][1f][1f][1f][1f][1f][1f][1f][1f][1f][1f][1f][1c][1c][1c][1c]0[1c][1c][1c][03]A
+[2024-06-18 13:47:27.099]{}DEBUG:[ProcessSocket.java-459 ] recvAck [ 1 ] {TCP} :Receive Message =[06]
+[2024-06-18 13:47:54.849]{}DEBUG:[ProcessSocket.java-547 ] SocketRecv [ 1 ] {TCP} :Receive Message =[02]0[1c]T01[1c]1.47[1c]000100[1c]DECLINE[1c]01[1f]Refer to Issuer[1f][1f][1f][1f][1f][1f][1f][1c]02[1c][1f][1f]0[1f]0[1f]0[1f]0[1f][1f][1c]1800[1f]2[1f]0726[1f][1f][1f][1f]02[1f][1f][1f][1f]0[1f][1f][1f][1f][1c][1f]20240618014726[1f]20240618014922[1f][1f][1f][1f][1f][1c][1f][1f][1f][1f][1c][1c][1c]EDCTYPE=CREDIT[1f]SN=53509228[1f]CARDBIN=515721[1f]PROGRAMTYPE=1[1f]TC=601D24895C97CB1E[1f]TVR=0000008001[1f]AID=A0000000041010[1f]TSI=0000[1f]IAD=0114810003040000000400000000000000FF[1f]CVM=7[1c][1c][1c][1c][03]M
+[2024-06-18 13:47:54.851]{}DEBUG:[TcpConnection.java-71 ] send [ 1 ] {TCP} :Send Message =[06]
+[2024-06-18 13:47:54.918]{}ERROR:[AbstractPosLink.java-905 ] unpackTrans [ 1 ] {TCP} :Payment_CREDIT_RETURN Fail!,ResultTxt =DECLINE
+[2024-06-18 13:47:54.922]{}DEBUG:[AbstractPosLink.java-543 ] ProcessTrans [ 1 ] {} :ProcessTrans End...

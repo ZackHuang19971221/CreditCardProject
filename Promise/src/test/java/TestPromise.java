@@ -11,7 +11,7 @@ public class TestPromise {
         var a = createGetDriverPromise();
         var b = createGetGuestNumberPromise();
         var c = createGetPricePromise();
-        a.then(b).execute();
+        a.then(b).then(c).execute();
         //To record Log
         while (true) {
             if(allDone[0]) {
@@ -99,19 +99,19 @@ public class TestPromise {
 
     private BaseApiResponse<Boolean> callGetDriverApi() {
         try {
-            Thread.sleep(0);
+            Thread.sleep(2000);
         }catch (Exception exception){}
         return new BaseApiResponse<>(Status.OK,"",true);
     }
     private BaseApiResponse<Integer> callGetGuestNumberApi() {
         try {
-            Thread.sleep(0);
+            Thread.sleep(2000);
         }catch (Exception exception){}
         return new BaseApiResponse<>(Status.OK,"",3);
     }
     private BaseApiResponse<Integer> callGetPriceApi(int person) {
         try {
-            Thread.sleep(0);
+            Thread.sleep(2000);
         }catch (Exception exception){}
         return new BaseApiResponse<>(Status.OK,"",120 / person);
     }

@@ -31,14 +31,14 @@ public class TestCreditCard {
         createPromise()
                 .promiseThen(createAuthPromiseThen())
                 .promiseThen(createCapturePromiseThen())
-                .promiseThen(createVoidSalePromiseThen("Capture"))
+                .promiseThen(createVoidSalePromiseThen("Capture",false))
                 .promiseThen(createFinalPromiseThen("Void Sale"));
     }
     @Test
     public void testSaleAndVoidSale() {
         createPromise()
                 .promiseThen(createSalePromiseThen())
-                .promiseThen(createVoidSalePromiseThen("Sale"))
+                .promiseThen(createVoidSalePromiseThen("Sale",false))
                 .promiseThen(createFinalPromiseThen("Void Sale"));
     }
 
@@ -48,11 +48,21 @@ public class TestCreditCard {
                 .promiseThen(createSalePromiseThen())
                 .promiseThen(createEnterTipsPromiseThen("Sale"))
                 .promiseThen(createAdjustTipsPromiseThen("Enter Tips"))
-                .promiseThen(createVoidSalePromiseThen("Adjust Tips"))
+                .promiseThen(createVoidSalePromiseThen("Adjust Tips",false))
                 .promiseThen(createFinalPromiseThen("Void Sale"));
     }
+
     @Test
-    public void testBatch() {
+    public void testSaleAndBatchAndRefund() {
+        createPromise()
+                .promiseThen(createSalePromiseThen())
+                .promiseThen(createBatchPromiseThen("Sale"))
+                .promiseThen(createVoidSalePromiseThen("Batch",true))
+                .promiseThen(createFinalPromiseThen("Refund"));
+    }
+
+    @Test
+    public void testBatchAll() {
         CreditCard<?> creditCard = generateCreditCard();
         com.hotsauce.creditcard.io.batchsettlement.Request request = new com.hotsauce.creditcard.io.batchsettlement.Request(getTransactionID(),"");
         creditCard.batch(request);
@@ -68,7 +78,7 @@ public class TestCreditCard {
 
     private final boolean showEnterTips = false;
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddhhmmss");
-    private final ProviderType providerType = ProviderType.Dejavoo;
+    private final ProviderType providerType = ProviderType.POSLink;
     private final DeviceInfo deviceInfo = DeviceInfo.builder()
             .ip("192.168.1.110")
             .port(DeviceInfo.getDeviceDefaultPort(providerType))
@@ -122,9 +132,9 @@ public class TestCreditCard {
         com.hotsauce.creditcard.io.sale.RequestToken request = new com.hotsauce.creditcard.io.sale.RequestToken(getTransactionID(),BigDecimal.ONE,BigDecimal.ZERO,BigDecimal.ONE,BigDecimal.ZERO,showEnterTips,refNumber,token,expDate,cardIssuers);
         return creditCard.sale(request);
     }
-    public Response<com.hotsauce.creditcard.io.voidsale.Response> testVoid(String refNumber) {
+    public Response<com.hotsauce.creditcard.io.voidsale.Response> testVoid(String refNumber,boolean isSettle) {
         CreditCard<?> creditCard = generateCreditCard();
-        com.hotsauce.creditcard.io.voidsale.Request request = new com.hotsauce.creditcard.io.voidsale.Request(getTransactionID(),refNumber,false);
+        com.hotsauce.creditcard.io.voidsale.Request request = new com.hotsauce.creditcard.io.voidsale.Request(getTransactionID(),refNumber,isSettle);
         return creditCard.voidSale(request);
     }
     public Response<com.hotsauce.creditcard.io.entertips.Response> testEnterTips(String refNumber) {
@@ -141,6 +151,11 @@ public class TestCreditCard {
         CreditCard<?> creditCard = generateCreditCard();
         com.hotsauce.creditcard.io.tokenize.Request request = new com.hotsauce.creditcard.io.tokenize.Request(getTransactionID());
         return creditCard.tokenize(request);
+    }
+    public Response<com.hotsauce.creditcard.io.batchsettlement.Response> testBatch() {
+        CreditCard<?> creditCard = generateCreditCard();
+        com.hotsauce.creditcard.io.batchsettlement.Request request = new com.hotsauce.creditcard.io.batchsettlement.Request(getTransactionID(),"");
+        return creditCard.batch(request);
     }
     //endregion
 
@@ -227,13 +242,13 @@ public class TestCreditCard {
             }
         };
     }
-    private <T extends IReferNumber> PromiseReceived<Response<T>,Response<com.hotsauce.creditcard.io.voidsale.Response>> createVoidSalePromiseThen(String lastAction) {
+    private <T extends IReferNumber> PromiseReceived<Response<T>,Response<com.hotsauce.creditcard.io.voidsale.Response>> createVoidSalePromiseThen(String lastAction,boolean isSettle) {
         return new PromiseReceived<>() {
             @Override
             protected void onPromiseResolved(Response<T> response) {
                 System.out.println(lastAction + " Success");
                 System.out.println("Start Void Sale");
-                Response<com.hotsauce.creditcard.io.voidsale.Response> response1 = testVoid(response.getData().getRefNumber());
+                Response<com.hotsauce.creditcard.io.voidsale.Response> response1 = testVoid(response.getData().getRefNumber(),isSettle);
                 if(Objects.equals(response.getResultCode(), ResultCode.SUCCESS.getCode())) {
                     resolve(response1);
                 }else {
@@ -316,6 +331,28 @@ public class TestCreditCard {
             @Override
             protected void onPromiseRejected(Response<com.hotsauce.creditcard.io.tokenize.Response> response) {
                 System.out.println("Get Token" + " Fail : " + response.getResultMessage());
+            }
+        };
+    }
+    private <T extends IReferNumber> PromiseReceived<Response<T>,Response<T>> createBatchPromiseThen(String lastAction) {
+        return new PromiseReceived<>() {
+            @Override
+            protected void onPromiseResolved(Response<T> response) {
+                System.out.println(lastAction + " Success");
+                System.out.println("Start Batch");
+                Response<com.hotsauce.creditcard.io.batchsettlement.Response> response1 = testBatch();
+                if(Objects.equals(response1.getResultCode(), ResultCode.SUCCESS.getCode())) {
+                    response.setResultCode(response1.getResultCode());
+                    response.setResultMessage(response1.getResultMessage());
+                    resolve(response);
+                }else {
+                    reject(response);
+                }
+            }
+
+            @Override
+            protected void onPromiseRejected(Response<T> response) {
+                System.out.println("Batch" + " Fail : " + response.getResultMessage());
             }
         };
     }
